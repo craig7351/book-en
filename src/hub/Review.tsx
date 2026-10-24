@@ -3,7 +3,7 @@ import { api, errorText } from '../shared/api'
 import { speak } from '../shared/speak'
 import { lemmaCandidates, normWord, tokenize } from '../shared/tokenize'
 import type { Item } from '../shared/types'
-import { dueText, SourceLink } from './Vocab'
+import { SourceLink } from './Vocab'
 
 // 題型：
 //   choice 看中文選英文；spell 聽發音拼字；cloze 原句克漏字（可回影片聽原句）；
@@ -32,12 +32,17 @@ function findForm(context: string, word: string): { before: string; after: strin
   return { before: join(tokens.slice(0, i)) + tokens[i].pre, form: tokens[i].word, after: tokens[i].post + join(tokens.slice(i + 1)) }
 }
 
-async function buildQuiz(item: Item): Promise<Quiz> {
-  if (item.kind === 'sentence') return { kind: 'recall', item }
-  const options: Quiz['kind'][] = ['spell']
-  if (item.meaningZh) options.push('choice', 'choice')
+type Kind = Quiz['kind']
+const ALL_KINDS: Kind[] = ['choice', 'spell', 'cloze', 'recall']
+
+// 依使用者勾選的題型出題；這個項目做不了任何勾選的題型就回 null（略過）
+async function buildQuiz(item: Item, kinds: Kind[]): Promise<Quiz | null> {
+  if (item.kind === 'sentence') return kinds.includes('recall') ? { kind: 'recall', item } : null
   const cloze = item.context ? findForm(item.context, item.text) : null
-  if (cloze) options.push('cloze', 'cloze')
+  const options = kinds.filter(
+    (k) => k === 'spell' || (k === 'choice' && !!item.meaningZh) || (k === 'cloze' && !!cloze),
+  )
+  if (!options.length) return null
   const kind = options[Math.floor(Math.random() * options.length)]
   if (kind === 'cloze' && cloze) return { kind, item, ...cloze }
   if (kind === 'choice') {
@@ -47,30 +52,106 @@ async function buildQuiz(item: Item): Promise<Quiz> {
   return { kind: 'spell', item }
 }
 
+// 從佇列前端找第一個能出題的項目，回傳剩下的佇列（以第一題開頭）與略過的項目
+async function firstQuiz(queue: Item[], kinds: Kind[]) {
+  for (let i = 0; i < queue.length; i++) {
+    const quiz = await buildQuiz(queue[i], kinds)
+    if (quiz) return { queue: queue.slice(i), quiz, skipped: queue.slice(0, i) }
+  }
+  return { queue: [] as Item[], quiz: null, skipped: queue }
+}
+
+async function loadKinds(): Promise<Kind[]> {
+  const raw = await api.getSetting('prefs').catch(() => null)
+  const saved = (raw ? JSON.parse(raw) : {}).quizKinds as Kind[] | undefined
+  const kinds = (saved ?? ALL_KINDS).filter((k) => ALL_KINDS.includes(k))
+  return kinds.length ? kinds : ALL_KINDS
+}
+
+async function saveKinds(kinds: Kind[]) {
+  // 讀最新的再合併，避免蓋掉其他設定
+  const raw = await api.getSetting('prefs').catch(() => null)
+  await api.setSetting('prefs', JSON.stringify({ ...(raw ? JSON.parse(raw) : {}), quizKinds: kinds }))
+}
+
+// 題型開關（至少留一個由 Review 檢查）
+function KindPicker({ kinds, onToggle }: { kinds: Kind[]; onToggle: (k: Kind) => void }) {
+  return (
+    <div className="kind-picker">
+      <span className="muted">題型</span>
+      {ALL_KINDS.map((k) => (
+        <button
+          key={k}
+          className={kinds.includes(k) ? 'kind on' : 'kind'}
+          title={kinds.includes(k) && kinds.length === 1 ? '至少要選一種題型' : undefined}
+          onClick={() => onToggle(k)}
+        >
+          {kinds.includes(k) ? '✓ ' : ''}
+          {QUIZ_LABEL[k]}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function Review({ onChanged }: { onChanged: () => void }) {
   const [queue, setQueue] = useState<Item[] | null>(null)
   const [practice, setPractice] = useState(false)
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [score, setScore] = useState({ right: 0, total: 0 })
+  // 不適用目前題型而略過的項目；改題型時放回佇列
+  const [parked, setParked] = useState<Item[]>([])
+  const [kinds, setKinds] = useState<Kind[]>(ALL_KINDS)
+  // 連點時以最新的勾選計算，並丟掉過期的換題結果
+  const kindsRef = useRef<Kind[]>(ALL_KINDS)
   const [err, setErr] = useState<string | null>(null)
 
-  async function start(mode: 'due' | 'practice') {
+  async function start(mode: 'due' | 'practice', useKinds = kinds) {
     setErr(null)
     try {
       const items =
         mode === 'due' ? await api.reviewDue(30) : shuffle(await api.itemList()).slice(0, 10)
+      const first = await firstQuiz(items, useKinds)
       setPractice(mode === 'practice')
       setScore({ right: 0, total: 0 })
-      setQueue(items)
-      setQuiz(items.length ? await buildQuiz(items[0]) : null)
+      setParked(first.skipped)
+      setQueue(first.queue)
+      setQuiz(first.quiz)
     } catch (e) {
       setErr(errorText(e))
     }
   }
 
   useEffect(() => {
-    void start('due')
+    loadKinds().then((k) => {
+      kindsRef.current = k
+      setKinds(k)
+      void start('due', k)
+    })
   }, [])
+
+  async function toggleKind(k: Kind) {
+    const cur = kindsRef.current
+    const next = cur.includes(k) ? cur.filter((x) => x !== k) : ALL_KINDS.filter((x) => x === k || cur.includes(x))
+    if (!next.length) return
+    kindsRef.current = next
+    setKinds(next)
+    void saveKinds(next)
+    // 本輪還沒考的（含先前略過的）依新題型重新挑；目前這題的題型還開著就不換
+    const pool = [...(queue ?? []), ...parked]
+    if (!pool.length) return void start(practice ? 'practice' : 'due', next)
+    const keep = quiz && next.includes(quiz.kind)
+    const first = keep ? null : await firstQuiz(pool, next)
+    if (kindsRef.current !== next) return
+    if (first) {
+      setQueue(first.queue)
+      setQuiz(first.quiz)
+      setParked(first.skipped)
+    } else {
+      setQueue(pool)
+      setParked([])
+    }
+  }
 
   async function finish(quality: number) {
     if (!quiz || !queue) return
@@ -82,9 +163,16 @@ export function Review({ onChanged }: { onChanged: () => void }) {
     const rest = queue.slice(1)
     // 忘記的字排到本輪最後再考一次（練習模式不重複）
     const next = quality < 3 && !practice ? [...rest, quiz.item] : rest
-    setQueue(next)
-    setQuiz(next.length ? await buildQuiz(next[0]) : null)
+    const first = await firstQuiz(next, kindsRef.current)
+    setParked((p) => [...p, ...first.skipped])
+    setQueue(first.queue)
+    setQuiz(first.quiz)
   }
+
+  const skippedNote =
+    parked.length > 0 ? (
+      <p className="muted small">有 {parked.length} 個項目不適用目前選的題型，先略過（排程不變，改題型就會出現）。</p>
+    ) : null
 
   if (err) return <p className="msg error">{err}</p>
   if (!queue) return <p className="empty">載入中…</p>
@@ -102,7 +190,9 @@ export function Review({ onChanged }: { onChanged: () => void }) {
         ) : (
           <h2>目前沒有要複習的項目</h2>
         )}
+        {skippedNote}
         <p className="muted">間隔重複會在你快忘記的時候再安排複習。</p>
+        <KindPicker kinds={kinds} onToggle={toggleKind} />
         <div className="row-btns">
           <button onClick={() => start('due')}>重新檢查待複習</button>
           <button onClick={() => start('practice')}>隨機練習 10 題（不影響排程）</button>
@@ -120,6 +210,8 @@ export function Review({ onChanged }: { onChanged: () => void }) {
           剩 {queue.length} 題 · 答對 {score.right}/{score.total}
         </span>
       </div>
+      <KindPicker kinds={kinds} onToggle={toggleKind} />
+      {skippedNote}
       <QuizView key={`${quiz.item.id}-${score.total}`} quiz={quiz} onDone={finish} />
     </section>
   )
@@ -270,7 +362,7 @@ function QuizView({ quiz, onDone }: { quiz: Quiz; onDone: (quality: number) => v
           <button className="primary" onClick={() => onDone(result ? 4 : 1)}>
             下一題（Enter）
           </button>
-          <p className="muted small">{result ? '答對：拉長複習間隔' : `答錯：10 分鐘後再考 · 原排程 ${dueText(item)}`}</p>
+          <p className="muted small">{result ? '答對：拉長複習間隔' : '答錯：10 分鐘後再考，這一輪最後也會再出一次'}</p>
         </>
       )}
     </div>

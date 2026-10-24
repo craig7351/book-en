@@ -277,6 +277,34 @@ main {
   margin-left: auto;
 }
 
+/* 題型開關 */
+.kind-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 16px;
+  font-size: 13px;
+}
+
+.kind-picker .kind {
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.kind-picker .kind.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.review-done .kind-picker {
+  margin: 20px 0 12px;
+}
+
 .quiz {
   background: var(--surface);
   border: 1px solid var(--line);
