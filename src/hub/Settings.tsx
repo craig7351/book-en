@@ -1,0 +1,237 @@
+import { useEffect, useState } from 'react'
+import { api, errorText } from '../shared/api'
+import { DEFAULT_LEVELS, fmtRank, KNOWN_MAX_OPTIONS, SUGGEST_MAX_OPTIONS } from '../shared/levels'
+import { MODELS } from '../shared/types'
+
+type SubTab = 'general' | 'credits'
+
+// 設定：一般 / 貢獻（資料來源與授權）
+export function Settings() {
+  const [sub, setSub] = useState<SubTab>('general')
+  return (
+    <section className="settings">
+      <nav className="subtabs">
+        <button className={sub === 'general' ? 'on' : ''} onClick={() => setSub('general')}>
+          一般
+        </button>
+        <button className={sub === 'credits' ? 'on' : ''} onClick={() => setSub('credits')}>
+          貢獻
+        </button>
+      </nav>
+      {sub === 'general' ? <General /> : <Credits />}
+    </section>
+  )
+}
+
+// 偏好設定與 YouTube 面板共用（存在 Rust 端 settings 表的 prefs）
+function General() {
+  const [prefs, setPrefs] = useState<Record<string, unknown>>({})
+  const [claude, setClaude] = useState<string>('檢查中…')
+
+  useEffect(() => {
+    api
+      .getSetting('prefs')
+      .then((raw) => setPrefs(raw ? JSON.parse(raw) : {}))
+      .catch(() => {})
+    checkClaude()
+  }, [])
+
+  function checkClaude() {
+    setClaude('檢查中…')
+    api
+      .claudeStatus()
+      .then((v) => setClaude(`✓ 已安裝：${v}`))
+      .catch((e) => setClaude(errorText(e)))
+  }
+
+  async function update(patch: Record<string, unknown>) {
+    // 讀最新的再合併，避免蓋掉 YouTube 面板剛改的設定
+    const raw = await api.getSetting('prefs').catch(() => null)
+    const next = { ...(raw ? JSON.parse(raw) : {}), ...patch }
+    setPrefs(next)
+    await api.setSetting('prefs', JSON.stringify(next))
+  }
+
+  return (
+    <>
+      <h2>翻譯</h2>
+      <label className="row">
+        <span>Claude 模型</span>
+        <select value={(prefs.model as string) ?? 'haiku'} onChange={(e) => update({ model: e.target.value })}>
+          {MODELS.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="muted">
+        AI 翻譯與 AI 解釋使用本機的 Claude Code CLI（<code>claude -p</code>），用你已登入的帳號，不需要 API key。
+        翻譯結果會存在 exe 同目錄的 <code>subtitles</code> 資料夾，同一支影片不會重複翻譯。
+      </p>
+      <div className="row">
+        <span>Claude Code</span>
+        <span>{claude}</span>
+        <button onClick={checkClaude}>重新檢查</button>
+      </div>
+
+      <h2>單字分級</h2>
+      <label className="row">
+        <span>我的程度</span>
+        <select
+          value={(prefs.knownMax as number) ?? DEFAULT_LEVELS.knownMax}
+          onChange={(e) => update({ knownMax: Number(e.target.value) })}
+        >
+          {KNOWN_MAX_OPTIONS.map((n) => (
+            <option key={n} value={n}>
+              最常用前 {fmtRank(n)} 字當成已會
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="row">
+        <span>建議學習到</span>
+        <select
+          value={(prefs.suggestMax as number) ?? DEFAULT_LEVELS.suggestMax}
+          onChange={(e) => update({ suggestMax: Number(e.target.value) })}
+        >
+          {SUGGEST_MAX_OPTIONS.map((n) => (
+            <option key={n} value={n}>
+              第 {fmtRank(n)} 名（更後面算罕見）
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <h2>快捷鍵（YouTube 影片頁）</h2>
+      <table className="keys">
+        <tbody>
+          <tr><td><kbd>A</kbd></td><td>上一句</td></tr>
+          <tr><td><kbd>S</kbd></td><td>重播這一句</td></tr>
+          <tr><td><kbd>D</kbd></td><td>下一句</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>網址列</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>關閉單字卡</td></tr>
+          <tr><td><kbd>空白鍵</kbd></td><td>播放 / 暫停（YouTube 原生）</td></tr>
+        </tbody>
+      </table>
+    </>
+  )
+}
+
+interface Credit {
+  name: string
+  url: string
+  license: string
+  use: string
+  note?: string
+}
+
+const DATA: Credit[] = [
+  {
+    name: 'wordfreq',
+    url: 'https://github.com/rspeer/wordfreq',
+    license: '程式 Apache-2.0；資料 CC BY-SA 4.0（creativecommons.org/licenses/by-sa/4.0）',
+    use: '單字詞頻排名與分級（基礎 / 建議學習 / 罕見）',
+    note:
+      'Robyn Speer. (2022). rspeer/wordfreq: v3.0 (v3.0.2). Zenodo. https://doi.org/10.5281/zenodo.7199437 。' +
+      'book-en 由 wordfreq 匯出前 6 萬字的排名並以原形歸併，衍生的排名資料同樣以 CC BY-SA 4.0 提供。',
+  },
+  {
+    name: 'SUBTLEX（SUBTLEX-US、SUBTLEX-UK 等）',
+    url: 'http://crr.ugent.be/programs-data/subtitle-frequencies',
+    license: '可自由取得的資料（經作者同意隨 wordfreq 散布，須標註作者）',
+    use: 'wordfreq 的影視字幕詞頻來源之一',
+    note: 'Marc Brysbaert 等人建立。SUBTLEX 為免費提供的資料。',
+  },
+  {
+    name: 'OPUS OpenSubtitles 2018',
+    url: 'http://opus.nlpl.eu/OpenSubtitles.php',
+    license: '標註出處即可使用；原始資料來自 OpenSubtitles 專案（opensubtitles.org）',
+    use: 'wordfreq 的影視字幕詞頻來源之一',
+  },
+  {
+    name: 'wordfreq 的其他語料',
+    url: 'https://github.com/rspeer/wordfreq#license',
+    license: 'Google Books Ngram（books.google.com/ngrams）、Wikipedia、Leeds Internet Corpus、ParaCrawl 等，依各自條款',
+    use: 'wordfreq 詞頻的書面語、網路語料來源',
+  },
+  {
+    name: 'ECDICT 英漢詞典',
+    url: 'https://github.com/skywind3000/ECDICT',
+    license: 'MIT',
+    use: '離線中文釋義、音標、詞形（running → run）、考試標籤',
+  },
+  {
+    name: 'OpenCC（opencc-js）',
+    url: 'https://github.com/nk2028/opencc-js',
+    license: 'MIT',
+    use: '建置時把 ECDICT 的簡體釋義轉為台灣繁體',
+  },
+  {
+    name: 'Free Dictionary API（dictionaryapi.dev）',
+    url: 'https://dictionaryapi.dev',
+    license: '依其服務條款；內容主要來自 Wiktionary',
+    use: '英英釋義、例句、發音音檔（線上補充）',
+  },
+]
+
+const SERVICES: Credit[] = [
+  {
+    name: 'YouTube',
+    url: 'https://www.youtube.com',
+    license: '影片、字幕與自動翻譯的權利屬 YouTube / Google 及原作者',
+    use: '影片播放、英文字幕、YouTube 中文字幕與 Google 自動翻譯',
+    note: 'book-en 只在播放器內讀取字幕供個人學習，不下載影片、不散布字幕。',
+  },
+  {
+    name: 'Claude Code（Anthropic）',
+    url: 'https://www.anthropic.com/claude-code',
+    license: '依 Anthropic 服務條款，使用者自己的帳號',
+    use: 'AI 字幕翻譯、單字句中解釋',
+  },
+]
+
+const CODE: Credit[] = [
+  { name: 'Tauri', url: 'https://tauri.app', license: 'Apache-2.0 / MIT', use: '桌面 App 外殼' },
+  { name: 'React', url: 'https://react.dev', license: 'MIT', use: '介面' },
+  { name: 'Vite', url: 'https://vitejs.dev', license: 'MIT', use: '前端建置' },
+  { name: 'rusqlite / SQLite', url: 'https://github.com/rusqlite/rusqlite', license: 'MIT / Public Domain', use: '本機資料庫' },
+  { name: 'reqwest', url: 'https://github.com/seanmonstar/reqwest', license: 'MIT / Apache-2.0', use: '線上字典連線' },
+  { name: 'serde', url: 'https://serde.rs', license: 'MIT / Apache-2.0', use: '資料序列化' },
+]
+
+function CreditList({ title, items }: { title: string; items: Credit[] }) {
+  return (
+    <>
+      <h2>{title}</h2>
+      <div className="credits">
+        {items.map((c) => (
+          <div key={c.name} className="credit">
+            <div className="credit-name">{c.name}</div>
+            <div className="credit-url">{c.url}</div>
+            <div>
+              <span className="muted">用途：</span>
+              {c.use}
+            </div>
+            <div>
+              <span className="muted">授權：</span>
+              {c.license}
+            </div>
+            {c.note && <div className="muted small">{c.note}</div>}
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function Credits() {
+  return (
+    <>
+      <p className="muted">book-en 使用了以下資料、服務與開放原始碼專案，感謝這些作者與社群。</p>
+      <CreditList title="資料" items={DATA} />
+      <CreditList title="服務" items={SERVICES} />
+      <CreditList title="程式庫" items={CODE} />
+    </>
+  )
+}

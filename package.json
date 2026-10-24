@@ -1,0 +1,29 @@
+{
+  "name": "book-en",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:overlay": "vite build -c vite.overlay.config.ts",
+    "watch:overlay": "vite build -c vite.overlay.config.ts --watch",
+    "build:hub": "vite build -c vite.hub.config.ts",
+    "build:web": "npm run build:overlay && npm run build:hub",
+    "dev": "npm run build:web && cargo run --manifest-path src-tauri/Cargo.toml",
+    "typecheck": "tsc --noEmit",
+    "tauri": "tauri",
+    "build": "tauri build"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "opencc-js": "^1.0.5",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
+  }
+}

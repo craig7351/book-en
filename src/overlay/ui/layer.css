@@ -1,0 +1,90 @@
+/* 影片上的雙語字幕層（掛在 #movie_player 內） */
+:host {
+  all: initial;
+}
+
+:host > div {
+  position: absolute;
+  inset: 0;
+  --bg: #1f1f1f;
+  --fg: #f1f1f1;
+  --muted: #b0b0b0;
+  --line: #3a3a3a;
+  --accent: #60a5fa;
+  --accent-soft: rgb(96 165 250 / 0.18);
+  --saved: #fbbf24;
+  --saved-bg: rgb(251 191 36 / 0.2);
+  font: 14px/1.5 'Segoe UI', system-ui, 'Microsoft JhengHei', sans-serif;
+}
+
+.subs {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12%;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.subs-box {
+  max-width: 86%;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgb(8 8 8 / 0.72);
+  color: #fff;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.subs .en {
+  font-size: calc(clamp(16px, 2.3vw, 36px) * var(--scale, 1));
+  line-height: 1.35;
+}
+
+.subs .zh {
+  font-size: calc(clamp(14px, 1.9vw, 30px) * var(--scale, 1));
+  color: #fde68a;
+  margin-top: 2px;
+}
+
+.subs.blur .subs-box {
+  filter: blur(7px);
+  transition: filter 0.15s;
+}
+
+.subs.blur .subs-box:hover {
+  filter: none;
+}
+
+.w {
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.w:hover {
+  background: rgb(255 255 255 / 0.25);
+}
+
+.w.saved {
+  color: var(--saved);
+}
+
+.w.picked {
+  outline: 2px solid var(--accent);
+}
+
+.w.suggest {
+  color: #93c5fd;
+  text-decoration: underline 2px;
+  text-underline-offset: 4px;
+}
+
+.w.rare {
+  opacity: 0.6;
+}
+
+/* 字幕層內的單字卡：相對播放器定位 */
+.card-backdrop {
+  position: absolute;
+}

@@ -1,0 +1,38 @@
+fn main() {
+    // 宣告自訂指令的 ACL：youtube.com（遠端網址）呼叫自訂指令必須在 capability 授權。
+    // 新增指令時：generate_handler!、這裡、capabilities/*.json 三處都要加（yt-float 陷阱 7）。
+    tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
+        tauri_build::AppManifest::new().commands(&[
+            "ping",
+            "open_hub",
+            "play_source",
+            "translate_batch",
+            "translation_cached",
+            "ai_explain",
+            "claude_status",
+            "dict_lookup",
+            "dict_online",
+            "item_add",
+            "item_delete",
+            "item_list",
+            "saved_words",
+            "review_due",
+            "review_grade",
+            "stats",
+            "quiz_distractors",
+            "export_items",
+            "get_setting",
+            "set_setting",
+            "bookmark_list",
+            "bookmark_toggle",
+            "bookmark_delete",
+            "save_subtitles",
+            "load_subtitles",
+            "word_info",
+            "set_word_status",
+            "vocab_ranks",
+            "level_counts",
+        ]),
+    ))
+    .expect("failed to run tauri-build");
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-youtube",
+  "description": "主視窗載入 youtube.com；只授權 YouTube 網域、且只開放面板需要的指令",
+  "windows": ["main"],
+  "remote": {
+    "urls": ["https://*.youtube.com/*"]
+  },
+  "permissions": [
+    "allow-ping",
+    "allow-open-hub",
+    "allow-translate-batch",
+    "allow-translation-cached",
+    "allow-ai-explain",
+    "allow-claude-status",
+    "allow-dict-lookup",
+    "allow-dict-online",
+    "allow-item-add",
+    "allow-item-delete",
+    "allow-saved-words",
+    "allow-stats",
+    "allow-get-setting",
+    "allow-set-setting",
+    "allow-bookmark-list",
+    "allow-bookmark-toggle",
+    "allow-bookmark-delete",
+    "allow-save-subtitles",
+    "allow-load-subtitles",
+    "allow-word-info",
+    "allow-set-word-status"
+  ]
+}
