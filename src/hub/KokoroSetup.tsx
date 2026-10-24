@@ -83,6 +83,14 @@ export function KokoroSetup({
     void load()
   }
 
+  if (status && !status.supported) {
+    return (
+      <div className="kokoro">
+        <p className="muted small">這個平台的版本不支援 Kokoro（ONNX Runtime 沒有 Intel Mac 版），請改用系統語音。</p>
+      </div>
+    )
+  }
+
   const pct = progress?.total ? Math.min(100, (progress.received / progress.total) * 100) : 0
   const installed = !!status?.installed
 

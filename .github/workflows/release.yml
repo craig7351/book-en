@@ -23,11 +23,14 @@ jobs:
           - name: macos-arm64
             os: macos-latest
             args: '--target aarch64-apple-darwin'
+          # ONNX Runtime 沒有 Intel Mac 的預編譯檔 → 不含 Kokoro 語音
           - name: macos-x64
             os: macos-latest
-            args: '--target x86_64-apple-darwin'
+            args: '--target x86_64-apple-darwin -- --no-default-features'
+            test: '--target x86_64-apple-darwin --no-default-features'
+          # ONNX Runtime 的預編譯檔需要 glibc 2.38 以上
           - name: linux-x64
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             args: ''
     runs-on: ${{ matrix.os }}
     steps:
@@ -63,7 +66,7 @@ jobs:
       - run: npm run build:web
 
       - name: 測試
-        run: cargo test --manifest-path src-tauri/Cargo.toml ${{ matrix.args }}
+        run: cargo test --manifest-path src-tauri/Cargo.toml ${{ matrix.test || matrix.args }}
 
       - uses: tauri-apps/tauri-action@v0
         id: tauri

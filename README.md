@@ -128,8 +128,8 @@ tools/           建字典的腳本、CDP 測試工具
 | 平台 | 狀態 |
 |---|---|
 | Windows 10 / 11 | ✅ 主要開發與測試平台 |
-| macOS 10.13+ | ⚠️ 由 GitHub Actions 打包，尚未實機測試 |
-| Linux | ⚠️ 由 GitHub Actions 打包，尚未實機測試。YouTube 播放需要 GStreamer 解碼套件（deb 安裝時會一併安裝），系統朗讀不一定支援 |
+| macOS 10.13+ | ⚠️ 由 GitHub Actions 打包，尚未實機測試。Intel Mac 版沒有 Kokoro 語音（ONNX Runtime 沒有該平台的預編譯檔） |
+| Linux | ⚠️ 由 GitHub Actions 打包（Ubuntu 24.04，需要 glibc 2.38 以上），尚未實機測試。YouTube 播放需要 GStreamer 解碼套件（deb 安裝時會一併安裝），系統朗讀不一定支援 |
 
 ### 發布新版
 

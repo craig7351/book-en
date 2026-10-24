@@ -81,6 +81,7 @@ export function errorText(e: unknown): string {
   if (s.includes('bad-reply')) return 'Claude 回覆格式不對，請重試'
   if (s.includes('no-tauri')) return '未連線到 book-en 主程式'
   if (s.includes('no-dict')) return '尚未安裝離線字典（學習中心 → 設定 → 字典可下載）'
+  if (s.includes('tts-unsupported')) return '這個平台的版本不支援 Kokoro 語音（Intel Mac）'
   if (s.includes('tts-missing')) return 'Kokoro 語音還沒下載完整（設定 → 發音）'
   if (s.includes('checksum-mismatch')) return '下載的檔案檢查碼不符（可能下載不完整），請重試'
   if (s.includes('download-failed')) return `下載失敗：${s.replace(/^.*?download-failed:?\s*/, '')}`

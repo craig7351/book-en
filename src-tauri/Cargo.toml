@@ -15,7 +15,12 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 flate2 = "1"
 sha2 = "0.10"
 # Kokoro 離線語音：ONNX Runtime（靜態連結，打包時下載官方預編譯檔）
-ort = { version = "=2.0.0-rc.13", default-features = false, features = ["std", "download-binaries", "tls-rustls", "api-27"] }
+ort = { version = "=2.0.0-rc.13", optional = true, default-features = false, features = ["std", "download-binaries", "tls-rustls", "api-27"] }
+
+[features]
+# Kokoro 離線語音。ONNX Runtime 沒有 Intel Mac（x86_64-apple-darwin）的預編譯檔 → 該平台用 --no-default-features 打包
+default = ["kokoro"]
+kokoro = ["dep:ort"]
 
 [[bin]]
 name = "book-en"

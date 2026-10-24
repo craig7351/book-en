@@ -121,6 +121,7 @@ export const MODELS = [
 
 // Kokoro 離線語音的下載狀態
 export interface TtsStatus {
+  supported: boolean // 這個平台的版本有沒有 Kokoro（Intel Mac 沒有）
   installed: boolean
   dir: string // 下載位置
   downloadSize: number // 還要下載多少 bytes（裝好為 0）

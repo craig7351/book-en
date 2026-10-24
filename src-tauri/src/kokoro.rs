@@ -2,11 +2,13 @@
 // 流程：英文 → 音標（g2p.rs，misaki 詞典）→ token → ONNX Runtime 跑模型 → 24 kHz 音訊 → WAV（存快取）。
 // fp16 版偶爾整段輸出 NaN（同一句、同一個聲音固定會），把速度微調 ±3% 重算就好（PLAN.md 4.8）。
 use crate::db::err;
+#[cfg(feature = "kokoro")]
 use crate::g2p::{self, Lexicon};
-use ort::session::Session;
-use ort::value::Tensor;
+#[cfg(feature = "kokoro")]
+use ort::{session::Session, value::Tensor};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+#[cfg(feature = "kokoro")]
 use std::collections::HashMap;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -15,8 +17,10 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager, State};
 
 const SAMPLE_RATE: u32 = 24_000;
+#[cfg(feature = "kokoro")]
 const MAX_TOKENS: usize = 500; // 模型上限 510，留一點空間
 const CACHE_LIMIT: u64 = 200 * 1024 * 1024;
+#[cfg(feature = "kokoro")]
 const SPEED_RETRIES: [f32; 4] = [1.0, 0.97, 1.03, 0.94];
 
 #[derive(Deserialize, Clone)]
@@ -36,6 +40,7 @@ fn manifest() -> Manifest {
     serde_json::from_str(include_str!("../kokoro-manifest.json")).unwrap_or(Manifest { files: vec![] })
 }
 
+#[cfg(feature = "kokoro")]
 fn vocab() -> HashMap<char, i64> {
     let raw: HashMap<String, i64> = serde_json::from_str(include_str!("../kokoro-vocab.json")).unwrap_or_default();
     raw.into_iter().filter_map(|(k, v)| k.chars().next().map(|c| (c, v))).collect()
@@ -46,6 +51,7 @@ pub fn dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(app.state::<crate::db::DataDir>().0.join("kokoro"))
 }
 
+#[cfg(feature = "kokoro")]
 struct Engine {
     session: Session,
     us: Lexicon,
@@ -54,10 +60,16 @@ struct Engine {
     voices: HashMap<String, Vec<f32>>,
 }
 
+#[cfg(feature = "kokoro")]
+type Loaded = Engine;
+#[cfg(not(feature = "kokoro"))]
+type Loaded = ();
+
 /// 第一次念的時候才載入（模型約 160 MB、詞典約 13 MB）
 #[derive(Default)]
-pub struct Kokoro(Mutex<Option<Engine>>);
+pub struct Kokoro(Mutex<Option<Loaded>>);
 
+#[cfg(feature = "kokoro")]
 fn load(dir: &Path) -> Result<Engine, String> {
     let read = |name: &str| std::fs::read_to_string(dir.join(name)).map_err(|e| format!("tts-missing: {name}: {e}"));
     let us = Lexicon::from_json(&[&read("us_gold.json")?, &read("us_silver.json")?])?;
@@ -72,6 +84,7 @@ fn load(dir: &Path) -> Result<Engine, String> {
     Ok(Engine { session, us, gb, vocab: vocab(), voices: HashMap::new() })
 }
 
+#[cfg(feature = "kokoro")]
 impl Engine {
     fn voice(&mut self, dir: &Path, name: &str) -> Result<&Vec<f32>, String> {
         if !self.voices.contains_key(name) {
@@ -180,6 +193,21 @@ fn trim_cache(dir: &Path) {
     }
 }
 
+#[cfg(feature = "kokoro")]
+fn synthesize(app: &AppHandle, dir: &Path, text: &str, voice: &str, speed: f32) -> Result<Vec<f32>, String> {
+    let state = app.state::<Kokoro>();
+    let mut guard = state.0.lock().map_err(err)?;
+    if guard.is_none() {
+        *guard = Some(load(dir)?);
+    }
+    guard.as_mut().unwrap().speak(dir, text, voice, speed)
+}
+
+#[cfg(not(feature = "kokoro"))]
+fn synthesize(_: &AppHandle, _: &Path, _: &str, _: &str, _: f32) -> Result<Vec<f32>, String> {
+    Err("tts-unsupported".into())
+}
+
 /// 念一段英文，回傳 WAV（畫面用 <audio> 播）
 #[tauri::command]
 pub async fn tts_speak(
@@ -200,12 +228,7 @@ pub async fn tts_speak(
     }
     let app2 = app.clone();
     let bytes = tauri::async_runtime::spawn_blocking(move || -> Result<Vec<u8>, String> {
-        let state = app2.state::<Kokoro>();
-        let mut guard = state.0.lock().map_err(err)?;
-        if guard.is_none() {
-            *guard = Some(load(&dir)?);
-        }
-        let samples = guard.as_mut().unwrap().speak(&dir, &text, &voice, speed)?;
+        let samples = synthesize(&app2, &dir, &text, &voice, speed)?;
         let bytes = wav_bytes(&samples);
         if std::fs::create_dir_all(cached.parent().unwrap()).is_ok() && std::fs::write(&cached, &bytes).is_ok() {
             trim_cache(&dir);
@@ -220,6 +243,7 @@ pub async fn tts_speak(
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TtsStatus {
+    pub supported: bool, // 這個平台的版本有沒有 Kokoro（Intel Mac 沒有）
     pub installed: bool,
     pub dir: String,
     pub download_size: u64, // 還要下載多少（全部裝好為 0）
@@ -251,6 +275,7 @@ pub fn tts_status(app: AppHandle) -> Result<TtsStatus, String> {
     let files = manifest().files;
     let missing: u64 = files.iter().filter(|f| !file_ok(&dir, f)).map(|f| f.size).sum();
     Ok(TtsStatus {
+        supported: cfg!(feature = "kokoro"),
         installed: missing == 0 && !files.is_empty(),
         dir: dir.to_string_lossy().to_string(),
         download_size: missing,
@@ -271,6 +296,9 @@ struct Progress {
 /// 下載缺少的檔案：每個檔案比對 sha256 才放進去（已經有、大小正確的跳過）
 #[tauri::command]
 pub async fn tts_download(app: AppHandle) -> Result<String, String> {
+    if !cfg!(feature = "kokoro") {
+        return Err("tts-unsupported".into());
+    }
     let dir = dir(&app)?;
     std::fs::create_dir_all(dir.join("voices")).map_err(err)?;
     let files: Vec<ManifestFile> = manifest().files.into_iter().filter(|f| !file_ok(&dir, f)).collect();
@@ -329,6 +357,7 @@ pub fn tts_remove(app: AppHandle, state: State<'_, Kokoro>) -> Result<(), String
 mod tests {
     use super::*;
 
+    #[cfg(feature = "kokoro")]
     #[test]
     fn manifest_and_vocab_are_valid() {
         let m = manifest();
@@ -348,6 +377,7 @@ mod tests {
     }
 
     /// 需要真的模型：KOKORO_TEST_DIR=<下載資料夾> cargo test -- --ignored real_model
+    #[cfg(feature = "kokoro")]
     #[test]
     #[ignore]
     fn real_model() {

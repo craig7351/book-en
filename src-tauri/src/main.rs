@@ -6,6 +6,7 @@ mod db;
 mod dict;
 mod dictfile;
 mod examples;
+#[cfg(feature = "kokoro")]
 mod g2p;
 mod game;
 mod kokoro;
