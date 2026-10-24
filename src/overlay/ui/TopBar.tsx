@@ -36,7 +36,7 @@ export function TopBar() {
   // Ctrl+L 聚焦網址列（同瀏覽器習慣）
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key.toLowerCase() === 'l') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
         e.preventDefault()
         inputRef.current?.focus()
         inputRef.current?.select()

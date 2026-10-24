@@ -21,8 +21,33 @@ fn base_command() -> Command {
     }
     #[cfg(not(windows))]
     {
-        Command::new("claude")
+        // macOS 從 Dock / Finder 開的 App 只有最基本的 PATH（/usr/bin:/bin…），
+        // 找不到裝在 ~/.local/bin、Homebrew、npm global 的 claude（npm 版還需要 node）→ 補上常見位置
+        let mut c = Command::new("claude");
+        c.env("PATH", unix_path());
+        c
     }
+}
+
+#[cfg(not(windows))]
+fn unix_path() -> std::ffi::OsString {
+    let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
+    let mut dirs: Vec<std::path::PathBuf> = std::env::var_os("PATH")
+        .map(|p| std::env::split_paths(&p).collect())
+        .unwrap_or_default();
+    if let Some(home) = &home {
+        for d in [".local/bin", ".claude/local", ".npm-global/bin", ".volta/bin", ".bun/bin", "bin"] {
+            dirs.push(home.join(d));
+        }
+        // nvm：每個 Node 版本各有 bin
+        if let Ok(rd) = std::fs::read_dir(home.join(".nvm/versions/node")) {
+            dirs.extend(rd.flatten().map(|e| e.path().join("bin")));
+        }
+    }
+    for d in ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin"] {
+        dirs.push(d.into());
+    }
+    std::env::join_paths(dirs).unwrap_or_default()
 }
 
 // 送出提示詞（走 stdin，避免命令列長度與跳脫問題），回傳模型的文字回覆

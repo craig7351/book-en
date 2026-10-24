@@ -69,7 +69,7 @@ function General() {
       </label>
       <p className="muted">
         AI 翻譯與 AI 解釋使用本機的 Claude Code CLI（<code>claude -p</code>），用你已登入的帳號，不需要 API key。
-        翻譯結果會存在 exe 同目錄的 <code>subtitles</code> 資料夾，同一支影片不會重複翻譯。
+        翻譯結果會存在 <code>subtitles</code> 資料夾（Windows 在 exe 同目錄，其他平台在 App 資料夾），同一支影片不會重複翻譯。
       </p>
       <div className="row">
         <span>Claude Code</span>

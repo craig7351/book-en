@@ -33,9 +33,11 @@ fn valid_id(id: &str) -> bool {
     id.len() == 11 && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
-// 依序：exe 同目錄、App 資料夾
+// 依序：exe 同目錄（Windows）、App 資料夾。
+// macOS 不寫進 .app 裡（會破壞簽章）；Linux 的 AppImage / deb 執行檔目錄本來就不能寫。
 fn dirs(app: &tauri::AppHandle) -> Vec<PathBuf> {
     let mut out = Vec::new();
+    #[cfg(windows)]
     if let Some(dir) = std::env::current_exe().ok().and_then(|p| p.parent().map(|d| d.join("subtitles"))) {
         out.push(dir);
     }
