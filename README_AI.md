@@ -196,3 +196,12 @@ Haiku 翻 3 句約 3.6 秒；回覆在 JSON 的 `result` 欄位。
 - 克漏字若原句同時含兩個已收藏的字，只挖其中一個；提示用的中文是整句翻譯。
 - 沒有字幕軌的影片（部分官方 MV）無法使用；可考慮本機 Whisper 語音辨識。
 - 句子收藏的 ★ 狀態只在本次瀏覽中標示（`saved_words` 只回傳單字）。
+
+## 跨平台與 CI（2026-10-24）
+
+- `.github/workflows/release.yml`：Windows / macOS arm64 / macOS x64 / Linux 四個 job。推 `v*` 標籤 → 草稿 Release；手動執行 → Artifacts。
+  CI 會依 `dict-manifest.json` 下載字典並驗 sha256，放進 `src-tauri/resources/ecdict.db` 一起打包。
+- 平台設定：`tauri.macos.conf.json`（app、dmg）、`tauri.linux.conf.json`（deb、AppImage，deb 相依 GStreamer 解碼套件）。
+- 非 Windows 的 `claude`：GUI App 的 PATH 很陽春 → `claude.rs` 的 `unix_path()` 補 `~/.local/bin`、Homebrew、npm global、nvm 等位置。
+- AI 字幕只有 Windows 存 exe 同目錄；macOS 寫進 .app 會破壞簽章，Linux 執行檔目錄不可寫。
+- macOS、Linux 版尚未實機測試（WKWebView / WebKitGTK 上的字幕擷取、面板版面、TTS boundary 事件都待確認）。

@@ -32,9 +32,17 @@
 - **詞彙：** 依常用度分區瀏覽，可以整區標成「已知」。
 - **設定：** 包括資料來源與授權（「貢獻」分頁）。
 
-## 安裝（Windows）
+## 安裝
 
-1. 安裝 `book-en_x.y.z_x64-setup.exe`（從原始碼打包的方式見下方）。
+1. 從 [Releases](https://github.com/craig7351/book-en/releases) 下載對應平台的安裝檔：
+
+   | 平台 | 檔案 |
+   |---|---|
+   | Windows | `book-en_x.y.z_x64-setup.exe` |
+   | macOS（Apple 晶片／Intel） | `book-en_x.y.z_aarch64.dmg` ／ `book-en_x.y.z_x64.dmg` |
+   | Linux | `.deb` 或 `.AppImage` |
+
+   macOS 版沒有簽章：第一次開啟會被擋，請到「系統設定 → 隱私權與安全性」按「強制打開」。
 2. 第一次開啟時，如果找不到離線字典，App 會詢問要不要從 [GitHub Release `dict-v1`](https://github.com/craig7351/book-en/releases/tag/dict-v1) 下載。下載檔約 22 MB，解壓後 50 MB，App 會自動驗證檢查碼。
    - 選擇不下載也能用：看影片、字幕、翻譯、英英釋義、AI 功能、收藏和複習都照常。
    - 沒有字典時不能用的功能：中文釋義、單字分級、詞彙頁、例句庫。
@@ -55,8 +63,7 @@ AI 翻譯、AI 解釋、AI 例句會呼叫本機的 [Claude Code](https://www.an
 npm install
 
 # 離線字典：打包時會一起放進安裝檔，請先準備好
-curl -L -o ecdict.db.gz https://github.com/craig7351/book-en/releases/download/dict-v1/ecdict.db.gz
-gunzip -c ecdict.db.gz > src-tauri/resources/ecdict.db
+node tools/fetch-dict.mjs   # 下載並驗證 → src-tauri/resources/ecdict.db
 
 npm run dev      # 開發版
 npm run build    # 正式版 → src-tauri/target/release/bundle/nsis/
@@ -99,7 +106,8 @@ tools/           建字典的腳本、CDP 測試工具
 
 資料位置：
 - 使用者資料庫：`%APPDATA%\dev.booken.app\book-en.db`，存設定、收藏、複習紀錄、翻譯快取。
-- AI 字幕存檔：exe 同目錄的 `subtitles\`，不能寫入時改存 `%APPDATA%\dev.booken.app\subtitles\`。
+- AI 字幕存檔：Windows 存在 exe 同目錄的 `subtitles\`，不能寫入時改存 `%APPDATA%\dev.booken.app\subtitles\`；其他平台存在 App 資料夾的 `subtitles/`。
+- App 資料夾：macOS 是 `~/Library/Application Support/dev.booken.app/`，Linux 是 `~/.local/share/dev.booken.app/`。
 
 開發筆記與踩過的坑在 [`PLAN.md`](PLAN.md)、[`README_AI.md`](README_AI.md)。
 
@@ -108,8 +116,16 @@ tools/           建字典的腳本、CDP 測試工具
 | 平台 | 狀態 |
 |---|---|
 | Windows 10 / 11 | ✅ 主要開發與測試平台 |
-| macOS | ⚠️ 程式碼大致可移植，尚未測試 |
-| Linux | ⚠️ 尚未測試，YouTube 播放可能需要額外的 GStreamer 套件 |
+| macOS 10.13+ | ⚠️ 由 GitHub Actions 打包，尚未實機測試 |
+| Linux | ⚠️ 由 GitHub Actions 打包，尚未實機測試。YouTube 播放需要 GStreamer 解碼套件（deb 安裝時會一併安裝），系統朗讀不一定支援 |
+
+### 發布新版
+
+1. 修改 `package.json`、`src-tauri/tauri.conf.json`、`src-tauri/Cargo.toml` 的版本號。
+2. 推送標籤：`git tag v0.2.0 && git push origin v0.2.0`。
+3. GitHub Actions 會打包 Windows、macOS（Apple 晶片與 Intel）、Linux，並建立**草稿** Release。確認後到 GitHub 上按發布。
+
+只想試打包、不發布：在 Actions 頁面手動執行 `build`，安裝檔會放在該次執行的 Artifacts。
 
 ## 授權
 

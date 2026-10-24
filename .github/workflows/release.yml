@@ -55,16 +55,12 @@ jobs:
 
       - run: npm ci
 
-      # 離線字典一起打包進安裝檔：從 dict-manifest.json 的網址下載並驗證檢查碼
+      # 離線字典一起打包進安裝檔（依 dict-manifest.json 下載並驗證檢查碼）
       - name: 下載離線字典
-        shell: bash
-        run: |
-          url=$(node -p "require('./src-tauri/dict-manifest.json').url")
-          sha=$(node -p "require('./src-tauri/dict-manifest.json').sha256")
-          curl -fsSL -o ecdict.db.gz "$url"
-          echo "$sha  ecdict.db.gz" | shasum -a 256 -c -
-          mkdir -p src-tauri/resources
-          gunzip -c ecdict.db.gz > src-tauri/resources/ecdict.db
+        run: node tools/fetch-dict.mjs
+
+      # Tauri 的巨集編譯時要讀前端檔案（dist、gen-overlay）
+      - run: npm run build:web
 
       - name: 測試
         run: cargo test --manifest-path src-tauri/Cargo.toml ${{ matrix.args }}
