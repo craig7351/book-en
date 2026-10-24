@@ -6,7 +6,9 @@ mod db;
 mod dict;
 mod dictfile;
 mod examples;
+mod g2p;
 mod game;
+mod kokoro;
 mod levels;
 mod subtitles;
 mod translate;
@@ -124,6 +126,10 @@ fn main() {
             game::snack_use,
             game::game_practice,
             game::coin_history,
+            kokoro::tts_speak,
+            kokoro::tts_status,
+            kokoro::tts_download,
+            kokoro::tts_remove,
         ])
         .setup(|app| {
             // BOOKEN_DATA_DIR：改用別的資料夾放使用者資料庫（測試時不碰真實資料）
@@ -132,6 +138,7 @@ fn main() {
                 _ => app.path().app_data_dir()?,
             };
             std::fs::create_dir_all(&data_dir)?;
+            app.manage(db::DataDir(data_dir.clone()));
             let user_db = db::open_user_db(&data_dir.join("book-en.db"))?;
             // 使用者選過「不下載，繼續使用」就不再自動跳出字典畫面
             let skip_prompt = user_db
@@ -139,6 +146,7 @@ fn main() {
                 .map(|v| v == "skip")
                 .unwrap_or(false);
             app.manage(db::Db(Mutex::new(user_db)));
+            app.manage(kokoro::Kokoro::default());
 
             // 字典找不到也照樣開：查字 / 分級 / 例句庫停用，可在學習中心下載
             let (dict, dict_path) = dictfile::open_any(app.handle());

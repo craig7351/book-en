@@ -9,6 +9,9 @@ pub struct Dict(pub Mutex<Option<Connection>>);
 
 pub const NO_DICT: &str = "no-dict";
 
+/// 使用者資料夾（預設 App 資料夾；BOOKEN_DATA_DIR 可改，測試用）
+pub struct DataDir(pub std::path::PathBuf);
+
 pub const SCHEMA: &str = "
 PRAGMA journal_mode = WAL;
 CREATE TABLE IF NOT EXISTS settings(

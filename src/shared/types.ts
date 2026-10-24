@@ -118,3 +118,12 @@ export const MODELS = [
   { id: 'sonnet', label: 'Sonnet（品質較好）' },
   { id: 'opus', label: 'Opus（最好、較慢）' },
 ] as const
+
+// Kokoro 離線語音的下載狀態
+export interface TtsStatus {
+  installed: boolean
+  dir: string // 下載位置
+  downloadSize: number // 還要下載多少 bytes（裝好為 0）
+  totalSize: number
+  diskSize: number // 實際占用（含念過的句子快取）
+}

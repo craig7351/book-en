@@ -45,6 +45,10 @@
     "allow-shop-buy",
     "allow-snack-use",
     "allow-game-practice",
-    "allow-coin-history"
+    "allow-coin-history",
+    "allow-tts-speak",
+    "allow-tts-status",
+    "allow-tts-download",
+    "allow-tts-remove"
   ]
 }

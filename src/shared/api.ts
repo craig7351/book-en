@@ -14,6 +14,7 @@ import type {
   RankedWord,
   SavedSubs,
   Stats,
+  TtsStatus,
 } from './types'
 
 const startOfToday = () => {
@@ -60,6 +61,9 @@ export const api = {
     invoke<Example[]>('ai_examples', { lemma, knownMax, model, refresh }),
   dictStatus: () => invoke<DictStatus>('dict_status'),
   dictDownload: () => invoke<string>('dict_download'),
+  ttsStatus: () => invoke<TtsStatus>('tts_status'),
+  ttsDownload: () => invoke<string>('tts_download'),
+  ttsRemove: () => invoke<void>('tts_remove'),
   setWordStatus: (lemmas: string[], status: 'known' | 'ignore' | null) =>
     invoke<void>('set_word_status', { lemmas, status }),
   vocabRanks: (from: number, to: number) => invoke<RankedWord[]>('vocab_ranks', { from, to }),
@@ -77,6 +81,7 @@ export function errorText(e: unknown): string {
   if (s.includes('bad-reply')) return 'Claude 回覆格式不對，請重試'
   if (s.includes('no-tauri')) return '未連線到 book-en 主程式'
   if (s.includes('no-dict')) return '尚未安裝離線字典（學習中心 → 設定 → 字典可下載）'
+  if (s.includes('tts-missing')) return 'Kokoro 語音還沒下載完整（設定 → 發音）'
   if (s.includes('checksum-mismatch')) return '下載的檔案檢查碼不符（可能下載不完整），請重試'
   if (s.includes('download-failed')) return `下載失敗：${s.replace(/^.*?download-failed:?\s*/, '')}`
   return s

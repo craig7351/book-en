@@ -1269,6 +1269,57 @@ code {
   }
 }
 
+.kokoro {
+  margin: 4px 0 12px 122px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kokoro p {
+  margin: 0;
+}
+
+.kokoro-status code.path {
+  user-select: all;
+  word-break: break-all;
+}
+
+.kokoro-voices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+}
+
+.kvoice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.kvoice.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.kvoice .icon {
+  padding: 2px 8px;
+}
+
+.danger-btn {
+  color: var(--bad);
+}
+
+@media (max-width: 760px) {
+  .kokoro {
+    margin-left: 0;
+  }
+}
+
 .voice-warn {
   background: #fff8db;
   color: #6b4a00;

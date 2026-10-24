@@ -35,6 +35,8 @@
     "allow-dict-status",
     "allow-examples-for",
     "allow-ai-examples",
-    "allow-game-state"
+    "allow-game-state",
+    "allow-tts-speak",
+    "allow-tts-status"
   ]
 }

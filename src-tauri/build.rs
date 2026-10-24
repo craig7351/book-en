@@ -49,6 +49,10 @@ fn main() {
             "snack_use",
             "game_practice",
             "coin_history",
+            "tts_speak",
+            "tts_status",
+            "tts_download",
+            "tts_remove",
         ]),
     ))
     .expect("failed to run tauri-build");

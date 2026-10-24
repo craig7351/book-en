@@ -3,6 +3,7 @@ import { api, errorText } from '../shared/api'
 import { DEFAULT_LEVELS, fmtRank, KNOWN_MAX_OPTIONS, SUGGEST_MAX_OPTIONS } from '../shared/levels'
 import { game, gameErrorText, type GameState } from '../shared/game'
 import { Pixel } from '../shared/PixelArt'
+import { KokoroSetup } from './KokoroSetup'
 import { eggSprite, petSprite, SPECIES, SPECIES_INFO, type Species } from '../shared/sprites'
 import {
   ACCENT_LABEL,
@@ -167,6 +168,7 @@ function VoiceSection({
   const accent = (prefs.accent as Accent) ?? DEFAULT_VOICE.accent
   const voiceName = (prefs.voiceName as string) ?? ''
   const rate = (prefs.voiceRate as number) ?? DEFAULT_VOICE.voiceRate
+  const engine = (prefs.engine as string) ?? DEFAULT_VOICE.engine
   const known = !voiceName || voices.some((v) => v.name === voiceName)
 
   return (
@@ -191,7 +193,17 @@ function VoiceSection({
         <span className="muted small">真人錄音優先挑這個口音；聲音選「自動」時也依口音挑</span>
       </label>
       <label className="row">
-        <span>語音合成的聲音</span>
+        <span>語音合成引擎</span>
+        <select value={engine} onChange={(e) => update({ engine: e.target.value })}>
+          <option value="system">系統語音（電腦上安裝的語音）</option>
+          <option value="kokoro">Kokoro 離線自然語音（需下載約 173 MB）</option>
+        </select>
+      </label>
+      {engine === 'kokoro' ? (
+        <KokoroSetup engine={engine} voice={(prefs.kokoroVoice as string) ?? ''} accent={accent} update={update} />
+      ) : (
+        <label className="row">
+          <span>語音合成的聲音</span>
         <select value={known ? voiceName : ''} onChange={(e) => update({ voiceName: e.target.value })}>
           <option value="">自動（依口音挑）</option>
           {voices.map((v) => (
@@ -200,7 +212,8 @@ function VoiceSection({
             </option>
           ))}
         </select>
-      </label>
+        </label>
+      )}
       <label className="row">
         <span>語速</span>
         <select value={rate} onChange={(e) => update({ voiceRate: Number(e.target.value) })}>
@@ -217,7 +230,7 @@ function VoiceSection({
         <button onClick={() => void speakWord('pronunciation')}>🔊 單字 pronunciation</button>
         <button onClick={() => speakSentence('Practice makes perfect, so keep listening every day.')}>🔊 句子</button>
       </div>
-      {voices.length === 0 && (
+      {voices.length === 0 && engine === 'system' && (
         <div className="voice-warn">
           <b>這台電腦沒有英文語音</b>：句子（和沒有真人錄音的單字）會用其他語言的語音念，聽起來會不準。
           {IS_MAC ? (
@@ -231,7 +244,8 @@ function VoiceSection({
         </div>
       )}
       <p className="muted small">
-        語音合成用的是這台電腦安裝的語音（book-en 內嵌的瀏覽器元件沒有 Edge 瀏覽器的「線上自然語音」）。
+        「系統語音」用的是這台電腦安裝的語音（book-en 內嵌的瀏覽器元件沒有 Edge 瀏覽器的「線上自然語音」）。
+        Kokoro 第一次念要載入模型約 1–2 秒，之後一句約 0.5–1 秒，念過的句子會存起來。
         單字的真人錄音來自 dictionaryapi.dev 與維基詞典（Wikimedia Commons），需要網路；收藏時會記下錄音網址。
       </p>
     </>
@@ -399,6 +413,19 @@ const DATA: Credit[] = [
     use: '單字的真人發音錄音（dictionaryapi.dev 的錄音也來自這裡）',
   },
   {
+    name: 'Kokoro-82M（hexgrad）',
+    url: 'https://huggingface.co/hexgrad/Kokoro-82M',
+    license: 'Apache-2.0',
+    use: '離線自然語音（選用，使用者下載）；App 內的聲音試聽片段也是用它產生的',
+    note: '使用 onnx-community/Kokoro-82M-v1.0-ONNX 的 fp16 版本。',
+  },
+  {
+    name: 'misaki 發音詞典（hexgrad）',
+    url: 'https://github.com/hexgrad/misaki',
+    license: 'Apache-2.0',
+    use: 'Kokoro 的英文轉音標（美式、英式詞典）',
+  },
+  {
     name: 'Datamuse API',
     url: 'https://www.datamuse.com/api/',
     license: '依其服務條款（免費、免金鑰）',
@@ -427,6 +454,7 @@ const CODE: Credit[] = [
   { name: 'React', url: 'https://react.dev', license: 'MIT', use: '介面' },
   { name: 'Vite', url: 'https://vitejs.dev', license: 'MIT', use: '前端建置' },
   { name: 'rusqlite / SQLite', url: 'https://github.com/rusqlite/rusqlite', license: 'MIT / Public Domain', use: '本機資料庫' },
+  { name: 'ONNX Runtime（Microsoft）／ort', url: 'https://onnxruntime.ai', license: 'MIT／MIT 或 Apache-2.0', use: '在本機執行 Kokoro 語音模型' },
   { name: 'reqwest', url: 'https://github.com/seanmonstar/reqwest', license: 'MIT / Apache-2.0', use: '線上字典連線' },
   { name: 'serde', url: 'https://serde.rs', license: 'MIT / Apache-2.0', use: '資料序列化' },
 ]

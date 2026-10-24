@@ -229,3 +229,16 @@ Haiku 翻 3 句約 3.6 秒；回覆在 JSON 的 `result` 欄位。
 - 真人錄音：`dict_online` 回傳 `audioUrls`（dictionaryapi.dev 的 -us/-uk.mp3 ＋ 維基詞典頁面上的 en-us-/En-uk- 錄音，Wikimedia Commons）。
   dictionaryapi.dev 的 API 和音檔主機都會掛（HTTP 530），所以一律附上維基的錄音；播放時依口音排序、播不出來就試下一個。
 - 收藏單字時存 `items.audio_urls`（JSON 陣列，`db::migrate` 補欄位）；舊收藏沒有就在念的時候查一次並快取。
+
+## M12 Kokoro 離線語音（2026-10-25）
+
+- Rust：`src-tauri/src/kokoro.rs`（下載、狀態、刪除、`tts_speak` 回傳 WAV、磁碟快取 200 MB）、`src-tauri/src/g2p.rs`（misaki 詞典＋規則：-ies/-es/-ed/-ing、've/'re、縮寫逐字母、數字與年份、複合字、拼讀備援）。
+  `kokoro-manifest.json`（15 個檔案的固定網址＋sha256）、`kokoro-vocab.json`（音標 → token）。
+- ONNX Runtime 用 `ort =2.0.0-rc.13`（對應 ORT 1.28），`download-binaries` 靜態連結；官方 Windows 套件 82 MB（多是除錯檔），所以不讓使用者另外下載。
+- **fp16 的 NaN**：特定「句子＋聲音」會固定整段 NaN，重算沒用 → `SPEED_RETRIES` 速度 ×0.97 / ×1.03 / ×0.94 重算。
+- 8-bit 量化版（86 / 92 MB）在 CPU 上反而比 fp16 慢 3 倍，所以不用。
+- 前端：`speak.ts` 的 `engine`（system / kokoro）、`kokoroVoice`；Kokoro 失敗（沒下載）自動退回系統語音。
+  念到哪個字：模型沒有時間資訊 → 依字長比例對照播放進度（`followWords`）。
+- 試聽樣本：`src/hub/public/voice-samples/*.ogg`（10 個聲音各一句，Opus 32 kbps，共約 200 KB），用 fp16 模型產生後 ffmpeg 轉檔。
+- 下載位置跟著使用者資料夾（`db::DataDir`，`BOOKEN_DATA_DIR` 可改）：`<資料夾>\kokoro\`，快取在 `kokoro\cache\`。
+- 真模型的整合測試：`KOKORO_TEST_DIR=<含模型的資料夾> cargo test --release real_model -- --ignored --nocapture`。

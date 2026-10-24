@@ -14,6 +14,8 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 flate2 = "1"
 sha2 = "0.10"
+# Kokoro 離線語音：ONNX Runtime（靜態連結，打包時下載官方預編譯檔）
+ort = { version = "=2.0.0-rc.13", default-features = false, features = ["std", "download-binaries", "tls-rustls", "api-27"] }
 
 [[bin]]
 name = "book-en"
