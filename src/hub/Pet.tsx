@@ -42,9 +42,32 @@ export function formName(pet: PetView): string {
   return `成年・${BRANCH_INFO[(pet.branch ?? 'balance') as Branch].name}`
 }
 
+// 彩蛋：在寵物頁輸入 ↑↑↓↓←→←→BA → 像素圖預覽頁（#sprites）
+const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a']
+
+function useKonami(onDone: () => void) {
+  useEffect(() => {
+    let recent: string[] = [] // 最近 10 個按鍵（多按一次 ↑ 也照樣算）
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+      recent = [...recent, e.key.toLowerCase()].slice(-KONAMI.length)
+      if (recent.join() === KONAMI.join()) {
+        recent = []
+        onDone()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onDone])
+}
+
+const openSprites = () => (location.hash = '#sprites')
+
 export function Pet({ gs, onChange }: { gs: GameState; onChange: () => void }) {
   const [sub, setSub] = useState<Sub>('home')
   const [msg, setMsg] = useState<string | null>(null)
+  useKonami(openSprites)
 
   async function act(fn: () => Promise<unknown>, ok?: string) {
     setMsg(null)
