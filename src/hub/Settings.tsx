@@ -4,6 +4,16 @@ import { DEFAULT_LEVELS, fmtRank, KNOWN_MAX_OPTIONS, SUGGEST_MAX_OPTIONS } from 
 import { game, gameErrorText, type GameState } from '../shared/game'
 import { Pixel } from '../shared/PixelArt'
 import { eggSprite, petSprite, SPECIES, SPECIES_INFO, type Species } from '../shared/sprites'
+import {
+  ACCENT_LABEL,
+  DEFAULT_VOICE,
+  englishVoices,
+  onVoicesChanged,
+  speakSentence,
+  speakWord,
+  setVoicePrefs,
+  type Accent,
+} from '../shared/speak'
 import { MODELS, type DictStatus } from '../shared/types'
 
 type SubTab = 'general' | 'credits'
@@ -54,6 +64,7 @@ function General({ gs, onGameChange }: { gs: GameState | null; onGameChange: () 
     const raw = await api.getSetting('prefs').catch(() => null)
     const next = { ...(raw ? JSON.parse(raw) : {}), ...patch }
     setPrefs(next)
+    setVoicePrefs(next)
     await api.setSetting('prefs', JSON.stringify(next))
   }
 
@@ -117,6 +128,8 @@ function General({ gs, onGameChange }: { gs: GameState | null; onGameChange: () 
         </select>
       </label>
 
+      <VoiceSection prefs={prefs} update={update} />
+
       <GameSection gs={gs} onChange={onGameChange} />
 
       <h2>快捷鍵（YouTube 影片頁）</h2>
@@ -130,6 +143,97 @@ function General({ gs, onGameChange }: { gs: GameState | null; onGameChange: () 
           <tr><td><kbd>空白鍵</kbd></td><td>播放 / 暫停（YouTube 原生）</td></tr>
         </tbody>
       </table>
+    </>
+  )
+}
+
+const RATES = [0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2]
+const IS_MAC = /Mac/i.test(navigator.userAgent)
+
+// 發音：單字用真人錄音或語音合成、口音、系統語音、語速。所有發音（YouTube 面板、學習中心、複習）都照這裡
+function VoiceSection({
+  prefs,
+  update,
+}: {
+  prefs: Record<string, unknown>
+  update: (patch: Record<string, unknown>) => Promise<void>
+}) {
+  const [voices, setVoices] = useState(englishVoices)
+  useEffect(() => {
+    setVoices(englishVoices())
+    return onVoicesChanged(() => setVoices(englishVoices()))
+  }, [])
+  const wordSource = (prefs.wordSource as string) ?? DEFAULT_VOICE.wordSource
+  const accent = (prefs.accent as Accent) ?? DEFAULT_VOICE.accent
+  const voiceName = (prefs.voiceName as string) ?? ''
+  const rate = (prefs.voiceRate as number) ?? DEFAULT_VOICE.voiceRate
+  const known = !voiceName || voices.some((v) => v.name === voiceName)
+
+  return (
+    <>
+      <h2>發音</h2>
+      <label className="row">
+        <span>單字發音</span>
+        <select value={wordSource} onChange={(e) => update({ wordSource: e.target.value })}>
+          <option value="recording">字典的真人錄音（沒有錄音時用語音合成）</option>
+          <option value="tts">一律用語音合成</option>
+        </select>
+      </label>
+      <label className="row">
+        <span>口音</span>
+        <select value={accent} onChange={(e) => update({ accent: e.target.value })}>
+          {(Object.keys(ACCENT_LABEL) as Accent[]).map((a) => (
+            <option key={a} value={a}>
+              {ACCENT_LABEL[a]}
+            </option>
+          ))}
+        </select>
+        <span className="muted small">真人錄音優先挑這個口音；聲音選「自動」時也依口音挑</span>
+      </label>
+      <label className="row">
+        <span>語音合成的聲音</span>
+        <select value={known ? voiceName : ''} onChange={(e) => update({ voiceName: e.target.value })}>
+          <option value="">自動（依口音挑）</option>
+          {voices.map((v) => (
+            <option key={v.name} value={v.name}>
+              {v.name.replace(/^Microsoft /, '')}（{v.lang}・{v.localService ? '離線' : '線上'}）
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="row">
+        <span>語速</span>
+        <select value={rate} onChange={(e) => update({ voiceRate: Number(e.target.value) })}>
+          {RATES.map((r) => (
+            <option key={r} value={r}>
+              {r}×{r === DEFAULT_VOICE.voiceRate ? '（預設）' : ''}
+            </option>
+          ))}
+        </select>
+        <span className="muted small">例句的「慢速」會再放慢一點</span>
+      </label>
+      <div className="row">
+        <span>試聽</span>
+        <button onClick={() => void speakWord('pronunciation')}>🔊 單字 pronunciation</button>
+        <button onClick={() => speakSentence('Practice makes perfect, so keep listening every day.')}>🔊 句子</button>
+      </div>
+      {voices.length === 0 && (
+        <div className="voice-warn">
+          <b>這台電腦沒有英文語音</b>：句子（和沒有真人錄音的單字）會用其他語言的語音念，聽起來會不準。
+          {IS_MAC ? (
+            <>安裝方式：系統設定 → 輔助使用 → 朗讀內容 → 系統聲音 → 管理聲音 → 勾選英文聲音。</>
+          ) : (
+            <>
+              安裝方式：Windows 設定 → 時間與語言 → 語音 → 「管理語音」的「新增語音」→ 選 English (United States)（或英國、澳洲），
+              裝好後重新開啟 book-en。
+            </>
+          )}
+        </div>
+      )}
+      <p className="muted small">
+        語音合成用的是這台電腦安裝的語音（book-en 內嵌的瀏覽器元件沒有 Edge 瀏覽器的「線上自然語音」）。
+        單字的真人錄音來自 dictionaryapi.dev 與維基詞典（Wikimedia Commons），需要網路；收藏時會記下錄音網址。
+      </p>
     </>
   )
 }
@@ -287,6 +391,12 @@ const DATA: Credit[] = [
     url: 'https://dictionaryapi.dev',
     license: '依其服務條款；內容主要來自 Wiktionary',
     use: '英英釋義、例句、發音音檔（線上補充）',
+  },
+  {
+    name: '維基詞典發音錄音（Wiktionary / Wikimedia Commons）',
+    url: 'https://commons.wikimedia.org',
+    license: '各檔案依其授權（多為 CC BY-SA 或 CC0），作者見各檔案頁面',
+    use: '單字的真人發音錄音（dictionaryapi.dev 的錄音也來自這裡）',
   },
   {
     name: 'Datamuse API',

@@ -26,10 +26,11 @@ pub struct Item {
     pub ease: f64,
     pub reps: i64,
     pub lapses: i64,
+    pub audio_urls: Vec<String>,
 }
 
 const COLS: &str = "id, kind, text, phonetic, meaning_zh, context, context_zh, video_id, video_title, t, \
-                    created_at, due_at, interval_days, ease, reps, lapses";
+                    created_at, due_at, interval_days, ease, reps, lapses, audio_urls";
 
 fn row_item(r: &Row) -> rusqlite::Result<Item> {
     Ok(Item {
@@ -49,6 +50,10 @@ fn row_item(r: &Row) -> rusqlite::Result<Item> {
         ease: r.get(13)?,
         reps: r.get(14)?,
         lapses: r.get(15)?,
+        audio_urls: r
+            .get::<_, Option<String>>(16)?
+            .and_then(|j| serde_json::from_str(&j).ok())
+            .unwrap_or_default(),
     })
 }
 
@@ -68,6 +73,8 @@ pub struct ItemInput {
     pub video_id: Option<String>,
     pub video_title: Option<String>,
     pub t: Option<f64>,
+    #[serde(default)]
+    pub audio_urls: Vec<String>,
 }
 
 // 收藏；已存在就回傳原本那筆（不重複、不重置複習進度）
@@ -86,6 +93,14 @@ pub fn item_add(db: State<'_, Db>, item: ItemInput, day_start: Option<i64>) -> R
                 item.video_id, item.video_title, item.t, now],
     )
     .map_err(err)?;
+    // 錄音網址：新收藏直接存；舊的收藏還沒有就補上
+    if !item.audio_urls.is_empty() {
+        conn.execute(
+            "UPDATE items SET audio_urls = ?3 WHERE kind = ?1 AND text = ?2 AND (audio_urls IS NULL OR audio_urls = '[]')",
+            params![item.kind, text, serde_json::to_string(&item.audio_urls).map_err(err)?],
+        )
+        .map_err(err)?;
+    }
     if inserted > 0 && item.kind == "word" {
         game::on_collect(&conn, game::sane_day(day_start, now), now).map_err(err)?;
     }

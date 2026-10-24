@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, errorText } from '../shared/api'
-import { speak } from '../shared/speak'
+import { speakItem } from '../shared/speak'
 import { lemmaCandidates, normWord, tokenize } from '../shared/tokenize'
 import type { Item } from '../shared/types'
 import { game, MAX_LEVEL, playSfx, type GameState, type Reward } from '../shared/game'
@@ -279,7 +279,7 @@ function QuizView({
   const { item } = quiz
 
   useEffect(() => {
-    if (quiz.kind === 'spell' || quiz.kind === 'recall') speak(item.text)
+    if (quiz.kind === 'spell' || quiz.kind === 'recall') speakItem(item)
     inputRef.current?.focus()
   }, [])
 
@@ -306,7 +306,7 @@ function QuizView({
   const reveal = (
     <div className="reveal">
       <div className="reveal-word">
-        <span onClick={() => speak(item.text)} title="發音">
+        <span onClick={() => speakItem(item)} title="發音">
           🔊 {item.text}
         </span>
         {item.phonetic && <span className="phonetic">/{item.phonetic}/</span>}
@@ -323,7 +323,7 @@ function QuizView({
       <div className="quiz">
         <p className="prompt">聽這句，試著聽懂或跟讀，再看答案。</p>
         <div className="row-btns">
-          <button onClick={() => speak(item.text, null, 0.85)}>🔊 再聽一次</button>
+          <button onClick={() => speakItem(item, 0.95)}>🔊 再聽一次</button>
           <SourceLink item={item} />
         </div>
         {!revealed ? (
@@ -372,7 +372,7 @@ function QuizView({
       {quiz.kind === 'spell' && (
         <>
           <p className="prompt">聽發音，拼出單字</p>
-          <button className="big-btn" onClick={() => speak(item.text)}>
+          <button className="big-btn" onClick={() => speakItem(item)}>
             🔊 播放
           </button>
           {item.meaningZh && <p className="muted">提示：{item.meaningZh}</p>}

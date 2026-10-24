@@ -953,6 +953,7 @@ mod tests {
     fn db() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch(crate::db::SCHEMA).unwrap();
+        crate::db::migrate(&conn).unwrap();
         conn
     }
 

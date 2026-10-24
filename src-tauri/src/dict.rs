@@ -91,6 +91,8 @@ pub fn dict_lookup(dict: State<'_, Dict>, word: String) -> Result<LookupResult, 
 #[serde(rename_all = "camelCase")]
 pub struct OnlineInfo {
     pub audio_url: Option<String>,
+    /// 所有真人錄音（常見 -us / -uk / -au 結尾），畫面依口音設定挑
+    pub audio_urls: Vec<String>,
     pub phonetic: Option<String>,
     pub senses: Vec<Sense>,
 }
@@ -119,7 +121,12 @@ pub async fn dict_online(word: String) -> Result<OnlineInfo, String> {
     let res = match client.get(url).send().await {
         Ok(r) if r.status().is_success() => r,
         Ok(r) if r.status().as_u16() == 404 => return Ok(OnlineInfo::default()), // 真的查無此字
-        _ => return Ok(datamuse(&client, &word).await.unwrap_or_default()),
+        _ => {
+            let mut info = datamuse(&client, &word).await.unwrap_or_default();
+            info.audio_urls = wiktionary_audio(&client, &word).await.unwrap_or_default();
+            info.audio_url = info.audio_urls.first().cloned();
+            return Ok(info);
+        }
     };
     let data: serde_json::Value = res.json().await.map_err(err)?;
     let entries = data.as_array().cloned().unwrap_or_default();
@@ -129,10 +136,14 @@ pub async fn dict_online(word: String) -> Result<OnlineInfo, String> {
             info.phonetic = e["phonetic"].as_str().map(str::to_string);
         }
         for p in e["phonetics"].as_array().into_iter().flatten() {
-            if info.audio_url.is_none() {
-                info.audio_url = p["audio"].as_str().filter(|a| !a.is_empty()).map(|a| {
-                    if a.starts_with("//") { format!("https:{a}") } else { a.to_string() }
-                });
+            let audio = p["audio"].as_str().filter(|a| !a.is_empty()).map(|a| {
+                if a.starts_with("//") { format!("https:{a}") } else { a.to_string() }
+            });
+            if let Some(a) = audio {
+                if !info.audio_urls.contains(&a) {
+                    info.audio_urls.push(a.clone());
+                }
+                info.audio_url.get_or_insert(a);
             }
         }
         for m in e["meanings"].as_array().into_iter().flatten() {
@@ -151,7 +162,61 @@ pub async fn dict_online(word: String) -> Result<OnlineInfo, String> {
             }
         }
     }
+    // dictionaryapi.dev 的音檔主機也會掛掉 → 一律附上維基共享資源的錄音當備援（畫面依序試）
+    for a in wiktionary_audio(&client, &word).await.unwrap_or_default() {
+        if !info.audio_urls.contains(&a) {
+            info.audio_urls.push(a);
+        }
+    }
+    if info.audio_url.is_none() {
+        info.audio_url = info.audio_urls.first().cloned();
+    }
     Ok(info)
+}
+
+// 真人錄音的備援：維基詞典頁面上的英文發音檔（Wikimedia Commons，CC 授權；dictionaryapi.dev 的錄音也是來自這裡）。
+// 檔名慣例 en-us-paper.ogg、En-uk-paper.ogg；Lingua Libre 的 LL-Q1860 (eng)-… 不知口音，排最後。
+async fn wiktionary_audio(client: &reqwest::Client, word: &str) -> Option<Vec<String>> {
+    let url = format!(
+        "https://en.wiktionary.org/w/api.php?action=query&titles={word}&prop=images&imlimit=100&format=json&formatversion=2"
+    );
+    let data: serde_json::Value = client
+        .get(url)
+        .header("User-Agent", "book-en/0.1 (https://github.com/craig7351/book-en)")
+        .send()
+        .await
+        .ok()?
+        .json()
+        .await
+        .ok()?;
+    let mut accented = Vec::new();
+    let mut other = Vec::new();
+    for img in data["query"]["pages"][0]["images"].as_array()? {
+        let Some(name) = img["title"].as_str().and_then(|t| t.strip_prefix("File:")) else { continue };
+        let lower = name.to_lowercase();
+        let audio = [".ogg", ".oga", ".mp3", ".wav", ".flac"].iter().any(|e| lower.ends_with(e));
+        if !audio {
+            continue;
+        }
+        let file = format!("https://commons.wikimedia.org/wiki/Special:FilePath/{}", encode_file(name));
+        if ["en-us-", "en-uk-", "en-gb-", "en-au-", "en-ca-", "en-nz-"].iter().any(|p| lower.starts_with(p)) {
+            accented.push(file);
+        } else if lower.starts_with("ll-q1860 ") {
+            other.push(file);
+        }
+    }
+    accented.extend(other);
+    Some(accented)
+}
+
+fn encode_file(name: &str) -> String {
+    name.replace(' ', "_")
+        .bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'(' | b')' => (b as char).to_string(),
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
 }
 
 // 備援：Datamuse（https://www.datamuse.com/api/），defs 格式 "n\t定義"
@@ -174,5 +239,5 @@ async fn datamuse(client: &reqwest::Client, word: &str) -> Option<OnlineInfo> {
         })
         .take(4)
         .collect();
-    Some(OnlineInfo { audio_url: None, phonetic: None, senses })
+    Some(OnlineInfo { audio_url: None, audio_urls: Vec::new(), phonetic: None, senses })
 }

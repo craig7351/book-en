@@ -218,3 +218,14 @@ Haiku 翻 3 句約 3.6 秒；回覆在 JSON 的 `result` 欄位。
   預覽：學習中心網址加 `#sprites`。描邊之後才畫的特效（音波、星星）放在 `branchFx`。
 - YouTube 頁（main capability）只開放 `game_state`；改設定、買東西都在學習中心。
 - **測試用的資料夾**：環境變數 `BOOKEN_DATA_DIR` 改放使用者資料庫，測試遊戲時不要碰到使用者自己的 `%APPDATA%` 資料。
+
+## 發音設定（2026-10-24）
+
+- 所有發音都走 `src/shared/speak.ts`：`speakWord`（單字）、`speakSentence`（句子）、`speakItem`（收藏項目）。設定存在 prefs：
+  `wordSource`（recording / tts）、`accent`（us / uk / au）、`voiceName`（空 = 依口音自動）、`voiceRate`。
+  學習中心與 YouTube 面板讀 prefs 時呼叫 `setVoicePrefs`；呼叫端傳的速度是「倍率」（例句慢速 0.75），乘在設定語速上。
+- **WebView2 只有電腦上安裝的語音**，沒有 Edge 瀏覽器的線上自然語音。這台開發機只有 3 個繁中語音 → 沒裝英文語音時，設定頁顯示安裝說明。
+  Edge 的線上朗讀服務要算逆向出來的 Sec-MS-GEC 驗證碼（繞過存取限制），刻意不做。
+- 真人錄音：`dict_online` 回傳 `audioUrls`（dictionaryapi.dev 的 -us/-uk.mp3 ＋ 維基詞典頁面上的 en-us-/En-uk- 錄音，Wikimedia Commons）。
+  dictionaryapi.dev 的 API 和音檔主機都會掛（HTTP 530），所以一律附上維基的錄音；播放時依口音排序、播不出來就試下一個。
+- 收藏單字時存 `items.audio_urls`（JSON 陣列，`db::migrate` 補欄位）；舊收藏沒有就在念的時候查一次並快取。

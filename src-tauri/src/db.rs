@@ -124,7 +124,23 @@ CREATE TABLE IF NOT EXISTS game_daily(
 pub fn open_user_db(path: &Path) -> rusqlite::Result<Connection> {
     let conn = Connection::open(path)?;
     conn.execute_batch(SCHEMA)?;
+    migrate(&conn)?;
     Ok(conn)
+}
+
+/// 舊資料庫補欄位（CREATE TABLE IF NOT EXISTS 不會幫已存在的表加欄位）
+pub fn migrate(conn: &Connection) -> rusqlite::Result<()> {
+    if !column_exists(conn, "items", "audio_urls") {
+        // 單字的真人錄音網址（JSON 陣列），收藏時從線上字典帶過來
+        conn.execute_batch("ALTER TABLE items ADD COLUMN audio_urls TEXT")?;
+    }
+    Ok(())
+}
+
+fn column_exists(conn: &Connection, table: &str, col: &str) -> bool {
+    conn.prepare(&format!("SELECT 1 FROM pragma_table_info('{table}') WHERE name = ?1"))
+        .and_then(|mut s| s.exists([col]))
+        .unwrap_or(false)
 }
 
 pub fn open_dict(path: &Path) -> rusqlite::Result<Connection> {
@@ -148,4 +164,18 @@ pub fn now_ms() -> i64 {
 
 pub fn err(e: impl std::fmt::Display) -> String {
     e.to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn migrate_adds_audio_column_once() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(SCHEMA).unwrap();
+        migrate(&conn).unwrap();
+        migrate(&conn).unwrap(); // 第二次不能出錯
+        assert!(column_exists(&conn, "items", "audio_urls"));
+    }
 }

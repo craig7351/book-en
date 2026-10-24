@@ -170,7 +170,7 @@ mod tests {
         let mut it = vocab::Item {
             id: 1, kind: "word".into(), text: "run".into(), phonetic: None, meaning_zh: None,
             context: None, context_zh: None, video_id: None, video_title: None, t: None,
-            created_at: 0, due_at: 0, interval_days: 0.0, ease: 2.5, reps: 0, lapses: 0,
+            created_at: 0, due_at: 0, interval_days: 0.0, ease: 2.5, reps: 0, lapses: 0, audio_urls: vec![],
         };
         vocab::schedule(&mut it, 4, 0);
         assert_eq!((it.reps, it.interval_days), (1, 1.0));

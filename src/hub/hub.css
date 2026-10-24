@@ -1268,3 +1268,13 @@ code {
     animation: none;
   }
 }
+
+.voice-warn {
+  background: #fff8db;
+  color: #6b4a00;
+  border: 1px solid #f3d27a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  margin: 8px 0;
+}

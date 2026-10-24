@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, errorText } from '../../shared/api'
-import { speak, speakSentence } from '../../shared/speak'
+import { speakSentence, speakWord } from '../../shared/speak'
 import { lemmaCandidates } from '../../shared/tokenize'
 import { Examples } from './Examples'
 import { WordText } from './WordText'
@@ -43,6 +43,7 @@ export function WordCard() {
   const dictMissing = useStore((s) => s.dictMissing)
   const [dict, setDict] = useState<LookupResult | null>(null)
   const [online, setOnline] = useState<OnlineInfo | null>(null)
+  const [onlineWord, setOnlineWord] = useState<string | null>(null) // online 查的是哪個字（點 running 查的是原形 run）
   const [ai, setAi] = useState<string | null>(null)
   const [aiBusy, setAiBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
@@ -52,17 +53,27 @@ export function WordCard() {
     let alive = true
     setDict(null)
     setOnline(null)
+    setOnlineWord(null)
     setAi(null)
     setMsg(null)
-    const online = (word: string) => api.dictOnline(word).then((o) => alive && setOnline(o))
+    const online = (word: string) =>
+      api.dictOnline(word).then((o) => {
+        if (!alive) return
+        setOnline(o)
+        setOnlineWord(word.toLowerCase())
+      })
     // 沒有離線字典就不知道原形 → 線上字典依序試可能的原形（rhythms → rhythm）
     const onlineGuess = async (word: string) => {
       for (const w of lemmaCandidates(word)) {
         const o = await api.dictOnline(w).catch(() => null)
         if (!alive) return
-        if (o && (o.senses.length || o.audioUrl)) return setOnline(o)
+        if (o && (o.senses.length || o.audioUrl)) {
+          setOnlineWord(w.toLowerCase())
+          return setOnline(o)
+        }
       }
       setOnline(null)
+    setOnlineWord(null)
     }
     api
       .dictLookup(card.word)
@@ -93,6 +104,7 @@ export function WordCard() {
   const head = lemma ?? entry // 收藏時用原形
   const headWord = (head?.word ?? card.word).toLowerCase()
   const isSaved = savedSet.has(headWord)
+  const shownWord = entry?.word ?? card.word
   const phonetic = entry?.phonetic ?? online?.phonetic ?? null
   const tags = (entry?.tag ?? lemma?.tag ?? '').split(' ').filter((t) => TAGS[t])
   const info = infoOf(card.word)
@@ -121,6 +133,8 @@ export function WordCard() {
         videoId: !card!.context && captions.status === 'ready' ? captions.videoId : null,
         videoTitle: card!.context ? null : getVideoTitle(),
         t: card!.context ? null : cue?.start ?? null,
+        // 收藏的是原形：線上字典查的正好是原形才存它的錄音
+        audioUrls: onlineWord === headWord ? online?.audioUrls ?? [] : [],
       })
       await refreshSaved()
       // 原本標成已知 / 不要學的字改為學習中
@@ -158,7 +172,7 @@ export function WordCard() {
             {phonetic && <span className="card-phonetic">/{phonetic}/</span>}
           </div>
           <div className="card-actions">
-            <button className="icon" title="發音" onClick={() => speak(entry?.word ?? card.word, online?.audioUrl)}>
+            <button className="icon" title="發音" onClick={() => void speakWord(shownWord, onlineWord === shownWord.toLowerCase() ? online?.audioUrls : null)}>
               🔊
             </button>
             <button className="icon" title="關閉（Esc）" onClick={close}>
@@ -228,7 +242,7 @@ export function WordCard() {
             <div className="context">
               <div className="label">
                 {card.context ? '例句' : '原句'}
-                <button className="icon tiny" title="朗讀" onClick={() => speakSentence(ctxEn, 0.9, setCtxSpeaking)}>
+                <button className="icon tiny" title="朗讀" onClick={() => speakSentence(ctxEn, 1, setCtxSpeaking)}>
                   🔊
                 </button>
               </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, errorText } from '../shared/api'
-import { speak } from '../shared/speak'
+import { speakItem } from '../shared/speak'
 import type { Item, ItemKind } from '../shared/types'
 
 export const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -82,7 +82,7 @@ export function Vocab({ onChanged }: { onChanged: () => void }) {
         {shown.map((item) => (
           <article key={item.id} className={'item ' + item.kind}>
             <div className="item-head">
-              <span className="item-text" onClick={() => speak(item.text)} title="發音">
+              <span className="item-text" onClick={() => speakItem(item)} title="發音">
                 {item.text}
               </span>
               {item.phonetic && <span className="phonetic">/{item.phonetic}/</span>}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../shared/api'
 import { game, type GameState } from '../shared/game'
+import { setVoicePrefs } from '../shared/speak'
 import { EggPixel, PetPixel } from '../shared/PixelArt'
 import type { Stats } from '../shared/types'
 import { DictSetup } from './DictSetup'
@@ -43,6 +44,11 @@ export function App() {
 
   const refresh = useCallback(() => {
     api.stats().then(setStats).catch(() => {})
+    // 發音設定可能在別處改過（YouTube 面板與學習中心共用 prefs）
+    api
+      .getSetting('prefs')
+      .then((raw) => setVoicePrefs(raw ? JSON.parse(raw) : null))
+      .catch(() => {})
     refreshGame()
   }, [refreshGame])
 

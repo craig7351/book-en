@@ -26,7 +26,7 @@ export function Examples({ lemma, excludeCue }: { lemma: string; excludeCue: num
   const [ai, setAi] = useState<Example[] | null>(null)
   const [aiBusy, setAiBusy] = useState(false)
   const [aiErr, setAiErr] = useState<string | null>(null)
-  const rate = slow ? 0.7 : 0.9
+  const rate = slow ? 0.75 : 1 // 乘在設定語速上的倍率
 
   // 本片其他含這個字（同原形）的句子
   const videoIdx = useMemo(() => {

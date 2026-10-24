@@ -1,4 +1,5 @@
 import { game, playSfx } from '../shared/game'
+import { setVoicePrefs } from '../shared/speak'
 // 播放控制：載字幕、追蹤目前句、每句自動暫停 / 單句循環、快捷鍵、偏好設定。
 import { api } from '../shared/api'
 import type { WordInfo } from '../shared/levels'
@@ -215,7 +216,11 @@ export function setPrefs(patch: Partial<Prefs>): void {
 async function loadPrefs(): Promise<void> {
   try {
     const raw = await api.getSetting('prefs')
-    if (raw) store.set({ prefs: { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) } })
+    if (raw) {
+      const saved = JSON.parse(raw)
+      store.set({ prefs: { ...DEFAULT_PREFS, ...(saved as Partial<Prefs>) } })
+      setVoicePrefs(saved) // 發音設定（在學習中心設定）
+    }
   } catch {
     /* 用預設值 */
   }

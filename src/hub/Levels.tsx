@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, errorText } from '../shared/api'
 import { DEFAULT_LEVELS, fmtRank, LEVEL_LABEL, levelOf, type Level, type LevelPrefs } from '../shared/levels'
-import { speak } from '../shared/speak'
+import { speakWord } from '../shared/speak'
 import type { LevelCounts, LookupResult, RankedWord } from '../shared/types'
 
 const PAGE = 1000 // 每頁 1000 名（10 區 × 100 字）
@@ -210,7 +210,7 @@ function WordPopover({
     <div className="pop-backdrop" onClick={onClose}>
       <div className="pop" onClick={(e) => e.stopPropagation()}>
         <div className="pop-head">
-          <span className="item-text" onClick={() => speak(word.lemma)} title="發音">
+          <span className="item-text" onClick={() => void speakWord(word.lemma)} title="發音">
             🔊 {word.lemma}
           </span>
           {entry?.phonetic && <span className="phonetic">/{entry.phonetic}/</span>}

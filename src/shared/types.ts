@@ -17,6 +17,7 @@ export interface LookupResult {
 
 export interface OnlineInfo {
   audioUrl: string | null
+  audioUrls: string[] // 所有真人錄音（-us / -uk / -au）
   phonetic: string | null
   senses: { pos: string; definition: string; example: string | null }[]
 }
@@ -33,6 +34,7 @@ export interface ItemInput {
   videoId?: string | null
   videoTitle?: string | null
   t?: number | null
+  audioUrls?: string[] // 單字的真人錄音網址
 }
 
 export interface Item {
@@ -52,6 +54,7 @@ export interface Item {
   ease: number
   reps: number
   lapses: number
+  audioUrls: string[]
 }
 
 export interface Stats {
