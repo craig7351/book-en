@@ -294,6 +294,22 @@ button.primary {
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
 }
 
+.dict-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  background: rgb(245 158 11 / 0.15);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.dict-banner button {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 /* ---- 面板分頁：字幕 / 詞語 ---- */
 .ptabs {
   display: flex;

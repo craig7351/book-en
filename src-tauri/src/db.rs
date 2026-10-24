@@ -4,7 +4,10 @@ use std::path::Path;
 use std::sync::Mutex;
 
 pub struct Db(pub Mutex<Connection>);
-pub struct Dict(pub Mutex<Connection>);
+/// 離線字典；None = 沒找到 ecdict.db（使用者選擇不下載時 App 仍可使用，查字 / 分級 / 例句庫停用）
+pub struct Dict(pub Mutex<Option<Connection>>);
+
+pub const NO_DICT: &str = "no-dict";
 
 const SCHEMA: &str = "
 PRAGMA journal_mode = WAL;
@@ -52,6 +55,12 @@ CREATE TABLE IF NOT EXISTS seen_words(
   first_video TEXT,
   first_seen INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS ai_examples(
+  lemma TEXT PRIMARY KEY,
+  json TEXT NOT NULL,
+  model TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS review_log(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   item_id INTEGER NOT NULL,
@@ -68,7 +77,15 @@ pub fn open_user_db(path: &Path) -> rusqlite::Result<Connection> {
 }
 
 pub fn open_dict(path: &Path) -> rusqlite::Result<Connection> {
-    Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+    let conn = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+    // 確認真的是字典（避免半截或錯的檔案）
+    conn.query_row("SELECT COUNT(*) FROM dict LIMIT 1", [], |r| r.get::<_, i64>(0))?;
+    Ok(conn)
+}
+
+pub fn table_exists(conn: &Connection, name: &str) -> bool {
+    conn.query_row("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1", [name], |_| Ok(()))
+        .is_ok()
 }
 
 pub fn now_ms() -> i64 {

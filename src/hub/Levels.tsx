@@ -113,7 +113,11 @@ export function Levels({ onChanged }: { onChanged: () => void }) {
         排名依 wordfreq（含影視字幕語料），以原形計（running、ran 都算 run）。前 {fmtRank(prefs.knownMax)} 名自動當成已會；
         到第 {fmtRank(prefs.suggestMax)} 名為建議學習；更後面為罕見。可在 YouTube 頁的 ⚙ 調整。
       </p>
-      {msg && <p className="msg">{msg}</p>}
+      {msg && (
+        <p className="msg">
+          {msg} {msg.includes('離線字典') && <a href="#dict">前往下載</a>}
+        </p>
+      )}
 
       <div className="levels-body">
         <div className="lgrid">

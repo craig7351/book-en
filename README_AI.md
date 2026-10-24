@@ -17,10 +17,12 @@
 ```powershell
 curl.exe -L -o .cache/ecdict.csv https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict.csv
 npm install
-node tools/build-ecdict.mjs                     # ECDICT → ecdict.db（繁體）
+node tools/build-ecdict.mjs                         # ECDICT → ecdict.db（繁體）
 python -m venv .cache/venv
-.cache/venv/Scripts/python -m pip install wordfreq
-.cache/venv/Scripts/python tools/build-freq.py  # 加入詞頻排名
+.cache/venv/Scripts/python -m pip install wordfreq opencc-python-reimplemented
+.cache/venv/Scripts/python tools/build-freq.py      # 加入詞頻排名
+.cache/venv/Scripts/python tools/build-examples.py  # 加入 Tatoeba 例句庫（下載約 27 MB）
+node tools/package-dict.mjs                         # 產生 Release 用的 ecdict.db.gz、更新 dict-manifest.json
 ```
 
 ```powershell
@@ -165,6 +167,28 @@ Haiku 翻 3 句約 3.6 秒；回覆在 JSON 的 `result` 欄位。
 - 授權：wordfreq 資料 CC BY-SA 4.0，須標註 SUBTLEX 作者 → 學習中心「設定 → 貢獻」分頁。
 - 驗收：TED-Ed 影片 people / night / study 基礎、rhythms 建議（#6,583）、circadian / melatonin / hypothalamus 罕見；
   標 ✓ 後 rhythms 與 rhythm’s 立即取消強調；詞語分頁「建議學習 76 · 罕見 32 · 基礎 217」。
+
+## M10 單字卡例句 + 字典遺失處理（2026-10-24）
+
+- 例句來源：本片（同原形的其他句子，▶ `playCueOnce` 只播一句）、例句庫（Tatoeba，`examples` / `example_index`）、
+  字典英英例句、AI 例句（`ai_examples`，依原形快取在使用者資料庫）。
+- `WordText`：字幕、單字卡原句、例句共用的上色元件；目標字加框，TTS `boundary` 事件標亮正在念的字。
+  例句的字用 `word_info(..., recordSeen=false)` 查，**不算進「看過的字」**。點例句的字 → 單字卡換字，`cardHistory` 支援 ← 返回。
+- `tools/build-examples.py`（需 `pip install opencc-python-reimplemented`）：Tatoeba eng / cmn / eng-cmn links →
+  52,841 句、9,770 個原形；難度 = 句中其他字最難的排名，例句由易到難。Tatoeba 中文翻譯品質參差（社群貢獻）。
+- **字典遺失**：`Dict(Mutex<Option<Connection>>)`，找不到也照樣開。尋找順序：安裝版 resources → exe 旁 resources → `%APPDATA%\dev.booken.app\ecdict.db`。
+  沒有字典時自動開學習中心 `#dict` 畫面（使用者選「不下載」後 settings `dictPrompt=skip` 不再自動跳）。
+  下載：`dict_download` 從 `dict-manifest.json` 的網址抓 `ecdict.db.gz`（進度事件 `dict-progress`）→ 比對 sha256 → 解壓 → 驗證 → 換上，YouTube 頁自動重新載入。
+  `BOOKEN_DICT_URL` 可改下載位置測試（仍檢查 sha256）。
+- **重建字典完整順序**：`build-ecdict.mjs` → `build-freq.py` → `build-examples.py` → `node tools/package-dict.mjs`
+  （產生 `.cache/dict-release/ecdict.db.gz` 並更新 `dict-manifest.json`）→ 重新 build App → 把 gz 上傳到 manifest 的 Release 網址。
+- dictionaryapi.dev 會整個掛掉（HTTP 530）→ `dict_online` 自動改用 Datamuse（只有英英釋義）。沒有字典時依 `lemmaCandidates` 猜原形查線上。
+
+### ⚠️ 測試時別動到使用者自己開的 App
+- 使用者可能同時開著 release 版。debug 版與 release 版 identifier 相同 → **共用 WebView2 資料夾**，新開的 debug 版會併進既有瀏覽器程序、
+  `--remote-debugging-port` 不生效。解法：測試時另設 `WEBVIEW2_USER_DATA_FOLDER` 到暫存資料夾。
+- **不要用 `Stop-Process -Name book-en`**：只停自己啟動的 PID（`Get-CimInstance Win32_Process` 看 ExecutablePath 分辨）。
+- 使用者資料庫（%APPDATA%）也是共用的：測試後別清資料，使用者可能已經有自己的收藏。
 
 ## 已知限制 / 後續
 

@@ -62,6 +62,20 @@ export interface Stats {
   streakDays: number
 }
 
+export interface Example {
+  en: string
+  zh: string | null
+}
+
+export interface DictStatus {
+  installed: boolean
+  path: string | null
+  hasFreq: boolean
+  hasExamples: boolean
+  downloadUrl: string
+  downloadSize: number
+}
+
 export interface RankedWord {
   lemma: string
   rank: number

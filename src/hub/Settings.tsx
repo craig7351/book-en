@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, errorText } from '../shared/api'
 import { DEFAULT_LEVELS, fmtRank, KNOWN_MAX_OPTIONS, SUGGEST_MAX_OPTIONS } from '../shared/levels'
-import { MODELS } from '../shared/types'
+import { MODELS, type DictStatus } from '../shared/types'
 
 type SubTab = 'general' | 'credits'
 
@@ -27,8 +27,10 @@ export function Settings() {
 function General() {
   const [prefs, setPrefs] = useState<Record<string, unknown>>({})
   const [claude, setClaude] = useState<string>('檢查中…')
+  const [dict, setDict] = useState<DictStatus | null>(null)
 
   useEffect(() => {
+    api.dictStatus().then(setDict).catch(() => {})
     api
       .getSetting('prefs')
       .then((raw) => setPrefs(raw ? JSON.parse(raw) : {}))
@@ -73,6 +75,15 @@ function General() {
         <span>Claude Code</span>
         <span>{claude}</span>
         <button onClick={checkClaude}>重新檢查</button>
+      </div>
+
+      <h2>離線字典</h2>
+      <div className="row">
+        <span>狀態</span>
+        <span>{dict ? (dict.installed ? `✓ 已安裝${dict.hasExamples ? '（含例句庫）' : ''}` : '✗ 未安裝') : '檢查中…'}</span>
+        <a className="btn-link" href="#dict">
+          {dict?.installed ? '管理' : '下載字典'}
+        </a>
       </div>
 
       <h2>單字分級</h2>
@@ -162,16 +173,29 @@ const DATA: Credit[] = [
     use: '離線中文釋義、音標、詞形（running → run）、考試標籤',
   },
   {
-    name: 'OpenCC（opencc-js）',
+    name: 'Tatoeba',
+    url: 'https://tatoeba.org',
+    license: 'CC BY 2.0 FR（creativecommons.org/licenses/by/2.0/fr）',
+    use: '單字卡的離線例句庫（中英對照）',
+    note: '例句由 Tatoeba 社群的貢獻者撰寫與翻譯。book-en 選取有中文翻譯的英文句，中文轉為台灣繁體。',
+  },
+  {
+    name: 'OpenCC（opencc-js、opencc-python-reimplemented）',
     url: 'https://github.com/nk2028/opencc-js',
-    license: 'MIT',
-    use: '建置時把 ECDICT 的簡體釋義轉為台灣繁體',
+    license: 'MIT / Apache-2.0',
+    use: '建置時把 ECDICT 釋義與 Tatoeba 中文例句轉為台灣繁體',
   },
   {
     name: 'Free Dictionary API（dictionaryapi.dev）',
     url: 'https://dictionaryapi.dev',
     license: '依其服務條款；內容主要來自 Wiktionary',
     use: '英英釋義、例句、發音音檔（線上補充）',
+  },
+  {
+    name: 'Datamuse API',
+    url: 'https://www.datamuse.com/api/',
+    license: '依其服務條款（免費、免金鑰）',
+    use: 'dictionaryapi.dev 無法連線時的英英釋義備援',
   },
 ]
 

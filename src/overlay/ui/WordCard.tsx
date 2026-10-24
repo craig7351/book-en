@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { api, errorText } from '../../shared/api'
-import { speak } from '../../shared/speak'
+import { speak, speakSentence } from '../../shared/speak'
+import { lemmaCandidates } from '../../shared/tokenize'
+import { Examples } from './Examples'
+import { WordText } from './WordText'
 import type { DictEntry, LookupResult, OnlineInfo } from '../../shared/types'
 import { fmtRank, LEVEL_LABEL, levelOf, rankBar } from '../../shared/levels'
 import { infoOf, markLearning, refreshSaved, setWordStatus } from '../controller'
@@ -22,8 +25,14 @@ const TAGS: Record<string, string> = {
 const shortMeaning = (e: DictEntry | null) =>
   (e?.translation ?? '').split('\n').filter(Boolean).slice(0, 2).join('；') || null
 
+const close = () => store.set({ card: null, cardHistory: [] })
+const back = () =>
+  store.set((s) => ({ card: s.cardHistory[s.cardHistory.length - 1] ?? null, cardHistory: s.cardHistory.slice(0, -1) }))
+
 export function WordCard() {
   const card = useStore((s) => s.card)
+  const history = useStore((s) => s.cardHistory)
+  const [ctxSpeaking, setCtxSpeaking] = useState(-1)
   const captions = useStore((s) => s.captions)
   const zh = useStore((s) => s.zh)
   const model = useStore((s) => s.prefs.model)
@@ -31,6 +40,7 @@ export function WordCard() {
   useStore((s) => s.words) // 狀態改變時重繪
   const knownMax = useStore((s) => s.prefs.knownMax)
   const suggestMax = useStore((s) => s.prefs.suggestMax)
+  const dictMissing = useStore((s) => s.dictMissing)
   const [dict, setDict] = useState<LookupResult | null>(null)
   const [online, setOnline] = useState<OnlineInfo | null>(null)
   const [ai, setAi] = useState<string | null>(null)
@@ -44,23 +54,40 @@ export function WordCard() {
     setOnline(null)
     setAi(null)
     setMsg(null)
+    const online = (word: string) => api.dictOnline(word).then((o) => alive && setOnline(o))
+    // 沒有離線字典就不知道原形 → 線上字典依序試可能的原形（rhythms → rhythm）
+    const onlineGuess = async (word: string) => {
+      for (const w of lemmaCandidates(word)) {
+        const o = await api.dictOnline(w).catch(() => null)
+        if (!alive) return
+        if (o && (o.senses.length || o.audioUrl)) return setOnline(o)
+      }
+      setOnline(null)
+    }
     api
       .dictLookup(card.word)
       .then((r) => {
         if (!alive) return
         setDict(r)
-        const head = r.lemma?.word ?? r.entry?.word ?? card.word
-        return api.dictOnline(head).then((o) => alive && setOnline(o))
+        return online(r.lemma?.word ?? r.entry?.word ?? card.word)
       })
-      .catch((e) => alive && setMsg(errorText(e)))
+      .catch((e) => {
+        if (!alive) return
+        // 沒有離線字典：仍查線上英英釋義與發音（卡片上另有「下載字典」提示）
+        if (String(e).includes('no-dict')) return onlineGuess(card.word)
+        setMsg(errorText(e))
+      })
     return () => {
       alive = false
     }
-  }, [card?.word, card?.cueIdx])
+  }, [card?.word, card?.cueIdx, card?.context?.en])
 
   if (!card) return null
   const cues = cuesOf(store.get())
   const cue = cues[card.cueIdx]
+  // 原句：從例句點過來的字用例句，否則用字幕那一句
+  const ctxEn = card.context?.en ?? cue?.text ?? null
+  const ctxZh = card.context ? card.context.zh : typeof zh[card.cueIdx] === 'string' ? (zh[card.cueIdx] as string) : null
   const entry = dict?.entry ?? null
   const lemma = dict?.lemma ?? null
   const head = lemma ?? entry // 收藏時用原形
@@ -88,11 +115,12 @@ export function WordCard() {
         text: headWord,
         phonetic: head?.phonetic ?? phonetic,
         meaningZh: shortMeaning(head),
-        context: cue?.text ?? null,
-        contextZh: typeof zh[card!.cueIdx] === 'string' ? zh[card!.cueIdx] : null,
-        videoId: captions.status === 'ready' ? captions.videoId : null,
-        videoTitle: getVideoTitle(),
-        t: cue?.start ?? null,
+        context: ctxEn,
+        contextZh: ctxZh,
+        // 例句裡的字沒有影片出處
+        videoId: !card!.context && captions.status === 'ready' ? captions.videoId : null,
+        videoTitle: card!.context ? null : getVideoTitle(),
+        t: card!.context ? null : cue?.start ?? null,
       })
       await refreshSaved()
       // 原本標成已知 / 不要學的字改為學習中
@@ -105,10 +133,10 @@ export function WordCard() {
   }
 
   async function explain() {
-    if (!cue) return
+    if (!ctxEn) return
     setAiBusy(true)
     try {
-      setAi(await api.aiExplain(card!.word, cue.text, model))
+      setAi(await api.aiExplain(card!.word, ctxEn, model))
     } catch (e) {
       setAi(errorText(e))
     }
@@ -116,10 +144,15 @@ export function WordCard() {
   }
 
   return (
-    <div className="card-backdrop" onClick={() => store.set({ card: null })}>
+    <div className="card-backdrop" onClick={close}>
       <div className="card" onClick={(e) => e.stopPropagation()}>
         <div className="card-head">
           <div>
+            {history.length > 0 && (
+              <button className="icon back" title={`返回「${history[history.length - 1].word}」`} onClick={back}>
+                ←
+              </button>
+            )}
             <span className="card-word">{entry?.word ?? card.word}</span>
             {phonetic && <span className="card-phonetic">/{phonetic}/</span>}
           </div>
@@ -127,7 +160,7 @@ export function WordCard() {
             <button className="icon" title="發音" onClick={() => speak(entry?.word ?? card.word, online?.audioUrl)}>
               🔊
             </button>
-            <button className="icon" title="關閉（Esc）" onClick={() => store.set({ card: null })}>
+            <button className="icon" title="關閉（Esc）" onClick={close}>
               ✕
             </button>
           </div>
@@ -144,7 +177,7 @@ export function WordCard() {
           </div>
         )}
 
-        {info && (
+        {info && !dictMissing && (
           <div className="rank">
             <div className="rank-bar" title="越長越常用">
               <span style={{ width: `${rankBar(info.rank) * 100}%` }} />
@@ -155,8 +188,14 @@ export function WordCard() {
         )}
 
         <div className="card-body">
-          {!dict && !msg && <p className="muted">查詢中…</p>}
+          {!dict && !msg && !dictMissing && <p className="muted">查詢中…</p>}
           {dict && !entry && <p className="muted">字典查無此字，可試試 AI 解釋。</p>}
+          {dictMissing && (
+            <div className="no-dict">
+              尚未安裝離線字典：沒有中文釋義、詞頻與例句庫（英英釋義、發音、AI 解釋仍可用）。
+              <button onClick={() => api.openHub('dict')}>下載字典</button>
+            </div>
+          )}
           {entry?.translation && <Meaning text={entry.translation} />}
           {lemma && (
             <div className="lemma">
@@ -172,24 +211,46 @@ export function WordCard() {
               {online.senses.map((s, i) => (
                 <li key={i}>
                   <i>{s.pos}</i> {s.definition}
-                  {s.example && <div className="example">“{s.example}”</div>}
+                  {s.example && (
+                    <div className="example">
+                      <button className="icon tiny" title="朗讀例句" onClick={() => speakSentence(s.example!)}>
+                        🔊
+                      </button>
+                      “{s.example}”
+                    </div>
+                  )}
                 </li>
               ))}
             </ol>
           )}
-          {cue && (
+          {ctxEn && (
             <div className="context">
-              <div className="label">原句</div>
-              <div>{cue.text}</div>
-              {typeof zh[card.cueIdx] === 'string' && <div className="muted">{zh[card.cueIdx]}</div>}
+              <div className="label">
+                {card.context ? '例句' : '原句'}
+                <button className="icon tiny" title="朗讀" onClick={() => speakSentence(ctxEn, 0.9, setCtxSpeaking)}>
+                  🔊
+                </button>
+              </div>
+              <WordText
+                text={ctxEn}
+                picked={card.word}
+                speakingAt={ctxSpeaking}
+                onPick={(word) =>
+                  word !== card.word &&
+                  store.set((s) => ({ cardHistory: [...s.cardHistory, card], card: { ...card, word } }))
+                }
+              />
+              {ctxZh && <div className="muted">{ctxZh}</div>}
             </div>
           )}
           {ai && <div className="ai">{ai}</div>}
+          {/* 沒有字典時例句庫是空的，本片例句與 AI 例句照常 */}
+          <Examples lemma={lemmaKey} excludeCue={card.context ? -1 : card.cueIdx} />
         </div>
 
         {msg && <p className="card-msg">{msg}</p>}
         <div className="card-foot">
-          <button onClick={explain} disabled={aiBusy || !cue}>
+          <button onClick={explain} disabled={aiBusy || !ctxEn}>
             {aiBusy ? 'AI 解釋中…' : '🤖 AI 句中解釋'}
           </button>
           <div className="status-btns">

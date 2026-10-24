@@ -26,6 +26,10 @@
     "allow-word-info",
     "allow-set-word-status",
     "allow-vocab-ranks",
-    "allow-level-counts"
+    "allow-level-counts",
+    "allow-dict-status",
+    "allow-dict-download",
+    "allow-examples-for",
+    "allow-ai-examples"
   ]
 }

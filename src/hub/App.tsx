@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../shared/api'
 import type { Stats } from '../shared/types'
+import { DictSetup } from './DictSetup'
 import { Levels } from './Levels'
 import { Review } from './Review'
 import { Settings } from './Settings'
 import { Vocab } from './Vocab'
 
-type Tab = 'vocab' | 'levels' | 'review' | 'settings'
+type Tab = 'vocab' | 'levels' | 'review' | 'settings' | 'dict'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'vocab', label: '單字庫' },
   { id: 'levels', label: '詞彙' },
   { id: 'review', label: '複習' },
   { id: 'settings', label: '設定' },
 ]
+const PAGES: Tab[] = [...TABS.map((t) => t.id), 'dict'] // dict：離線字典畫面（不在分頁列）
 
 declare global {
   interface Window {
@@ -22,7 +24,7 @@ declare global {
 
 const tabFromHash = (): Tab => {
   const h = location.hash.slice(1) || window.__bookEnTab || ''
-  return TABS.some((t) => t.id === h) ? (h as Tab) : 'vocab'
+  return PAGES.includes(h as Tab) ? (h as Tab) : 'vocab'
 }
 
 export function App() {
@@ -70,6 +72,7 @@ export function App() {
         {tab === 'levels' && <Levels onChanged={refresh} />}
         {tab === 'review' && <Review onChanged={refresh} />}
         {tab === 'settings' && <Settings />}
+        {tab === 'dict' && <DictSetup onDone={() => (location.hash = '#vocab')} />}
       </main>
     </div>
   )

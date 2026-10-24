@@ -602,6 +602,93 @@ main {
   color: #fff;
 }
 
+/* 離線字典 */
+.dict-setup {
+  max-width: 820px;
+}
+
+.dict-ok,
+.dict-missing {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.dict-missing {
+  border-color: #f59e0b;
+}
+
+.dl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.dl-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.dl-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s;
+}
+
+.row-btns.left {
+  justify-content: flex-start;
+  margin: 14px 0 4px;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.features h3 {
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+
+.ok-list,
+.no-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.ok-list li::before {
+  content: '✓ ';
+  color: var(--ok);
+}
+
+.no-list li::before {
+  content: '✗ ';
+  color: var(--bad);
+}
+
+.ok-list li,
+.no-list li {
+  padding: 3px 0;
+}
+
+.btn-link {
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 12px;
+}
+
 /* 設定 */
 .settings {
   max-width: 760px;

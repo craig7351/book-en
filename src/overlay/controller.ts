@@ -51,6 +51,24 @@ async function loadWordInfo(videoId: string, my: number): Promise<void> {
   }
 }
 
+// 例句裡的字：查原形 / 排名 / 狀態來上色，但不算進「看過的字」
+export async function loadExtraWords(texts: string[]): Promise<void> {
+  const known = store.get().words
+  const missing = new Set<string>()
+  for (const text of texts) for (const t of tokenize(text)) if (t.word && !known.has(normWord(t.word))) missing.add(normWord(t.word))
+  if (!missing.size) return
+  try {
+    const infos = await api.wordInfo([...missing], null, false)
+    store.set((st) => {
+      const words = new Map(st.words)
+      for (const i of infos) if (!words.has(i.word)) words.set(i.word, i)
+      return { words }
+    })
+  } catch {
+    /* 不上色就算了 */
+  }
+}
+
 export function infoOf(word: string): WordInfo | undefined {
   return store.get().words.get(normWord(word).replace(/[^a-z'-]/g, ''))
 }
@@ -97,6 +115,8 @@ const currentVideoIdMatches = (id: string) => new URL(location.href).searchParam
 
 // 正在「守」的句子：播到它的結尾時要暫停或回到開頭。暫停過一次就放行（-1）。
 let guard = -1
+// 單字卡「▶ 原片段」：只播這一句，播完就停（不管有沒有開每句暫停）
+let once = -1
 
 function tick(): void {
   const s = store.get()
@@ -104,6 +124,10 @@ function tick(): void {
   const cues = cuesOf(s)
   if (v && cues.length) {
     const t = v.currentTime
+    if (!v.paused && once >= 0 && once < cues.length && t >= cues[once].end - 0.08) {
+      v.pause()
+      once = -1
+    }
     if (!v.paused && guard >= 0 && guard < cues.length) {
       const c = cues[guard]
       if (t >= c.end - 0.08 && t < c.end + 0.6) {
@@ -141,6 +165,11 @@ export function seekCue(idx: number): void {
   const cues = cuesOf(store.get())
   if (idx < 0 || idx >= cues.length) return
   seekTo(cues[idx].start, idx)
+}
+
+export function playCueOnce(idx: number): void {
+  seekCue(idx)
+  once = idx
 }
 
 export const prevCue = () => seekCue(Math.max(0, store.get().active - 1))
@@ -214,7 +243,7 @@ function onKey(e: KeyboardEvent): void {
   if (e.ctrlKey || e.altKey || e.metaKey || isTyping(e)) return
   const s = store.get()
   if (e.key === 'Escape' && s.card) {
-    store.set({ card: null })
+    store.set({ card: null, cardHistory: [] })
     return
   }
   if (s.captions.status !== 'ready') return
@@ -228,6 +257,10 @@ function onKey(e: KeyboardEvent): void {
 export function startController(): void {
   void loadPrefs()
   void refreshSaved()
+  api
+    .dictStatus()
+    .then((d) => store.set({ dictMissing: !d.installed }))
+    .catch(() => {})
   setInterval(refreshSaved, 60_000)
   // 從學習中心切回來：同步設定（模型）與已收藏 / 待複習數
   window.addEventListener('focus', () => {

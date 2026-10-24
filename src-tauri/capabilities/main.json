@@ -27,6 +27,9 @@
     "allow-save-subtitles",
     "allow-load-subtitles",
     "allow-word-info",
-    "allow-set-word-status"
+    "allow-set-word-status",
+    "allow-dict-status",
+    "allow-examples-for",
+    "allow-ai-examples"
   ]
 }

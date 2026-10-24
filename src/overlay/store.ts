@@ -42,7 +42,8 @@ export type CaptionState =
 
 export interface CardTarget {
   word: string
-  cueIdx: number
+  cueIdx: number // 字幕中的句子（從例句點過來時是原本那張卡的句子）
+  context?: { en: string; zh: string | null } // 從例句點的字：原句改用例句
 }
 
 export interface State {
@@ -60,6 +61,8 @@ export interface State {
   saved: Set<string> // 已收藏單字（小寫原形）
   savedSentences: Set<string>
   card: CardTarget | null
+  cardHistory: CardTarget[] // 單字卡「← 返回」用
+  dictMissing: boolean // 沒有離線字典（顯示提示）
   due: number
   words: Map<string, WordInfo> // 本片每個字（小寫字面）的原形、排名、個人狀態
   tab: 'subs' | 'words' // 面板分頁：字幕 / 詞語
@@ -81,6 +84,8 @@ let state: State = {
   saved: new Set(),
   savedSentences: new Set(),
   card: null,
+  cardHistory: [],
+  dictMissing: false,
   due: 0,
   words: new Map(),
   tab: 'subs',

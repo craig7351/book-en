@@ -32,6 +32,10 @@ fn main() {
             "set_word_status",
             "vocab_ranks",
             "level_counts",
+            "dict_status",
+            "dict_download",
+            "examples_for",
+            "ai_examples",
         ]),
     ))
     .expect("failed to run tauri-build");

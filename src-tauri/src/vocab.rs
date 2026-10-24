@@ -216,8 +216,8 @@ pub fn quiz_distractors(db: State<'_, Db>, dict: State<'_, Dict>, exclude: Strin
         let rows = stmt.query_map(params![exclude, n], |r| r.get(0)).map_err(err)?;
         rows.collect::<Result<_, _>>().map_err(err)?
     };
-    if (out.len() as i64) < n {
-        let conn = dict.0.lock().map_err(err)?;
+    let guard = dict.0.lock().map_err(err)?;
+    if let (true, Some(conn)) = ((out.len() as i64) < n, guard.as_ref()) {
         let mut stmt = conn
             .prepare(
                 "SELECT word FROM dict WHERE collins >= 3 AND word != ?1 AND word NOT LIKE '% %' \

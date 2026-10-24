@@ -24,11 +24,15 @@ const decode = (s: string) =>
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
 
-// 有樣式的字幕（如 MrBeast）會塞零寬空白 U+200B，\s 不會比對到 → 先拿掉
+// 有樣式的字幕（如 MrBeast）會塞零寬空白 U+200B，\s 不會比對到 → 先拿掉。
+// Google 自動翻譯的中文有時每個詞之間都有空白（「嚐 嚐 味道 怎麼樣」）→ 中文字、全形標點之間的空白拿掉。
+const CJK = '\\u3000-\\u303f\\u3400-\\u9fff\\uff00-\\uffef'
+const CJK_GAP = new RegExp(`([${CJK}])\\s+(?=[${CJK}])`, 'g')
 const clean = (s: string) =>
   decode(s)
     .replace(/[​-‍⁠﻿]/g, '')
     .replace(/\s+/g, ' ')
+    .replace(CJK_GAP, '$1')
     .trim()
 
 export function parseTimedText(body: string, url: string): Cue[] {

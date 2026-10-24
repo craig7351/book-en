@@ -4,13 +4,14 @@ mod bookmarks;
 mod claude;
 mod db;
 mod dict;
+mod dictfile;
+mod examples;
 mod levels;
 mod subtitles;
 mod translate;
 mod vocab;
 
 use std::sync::Mutex;
-use tauri::path::BaseDirectory;
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 const START_URL: &str = "https://www.youtube.com";
@@ -33,10 +34,7 @@ fn ping(msg: String) -> String {
     format!("pong from Rust（{msg}）")
 }
 
-// 打開學習中心（單字庫 / 複習 / 設定）；已開就帶到前景。
-// 必須是 async：Windows 上在同步指令裡建立視窗會死結（視窗卡在 about:blank、invoke 永不返回）。
-#[tauri::command]
-async fn open_hub(app: tauri::AppHandle, tab: Option<String>) -> Result<(), String> {
+fn show_hub<R: tauri::Runtime, M: Manager<R>>(app: &M, tab: Option<String>) -> Result<(), String> {
     if let Some(w) = app.get_webview_window("hub") {
         if let Some(tab) = tab {
             let _ = w.eval(format!("location.hash = {}", serde_json::to_string(&tab).map_err(db::err)?));
@@ -46,7 +44,7 @@ async fn open_hub(app: tauri::AppHandle, tab: Option<String>) -> Result<(), Stri
     }
     // 分頁不能放進 App 路徑（index.html#review 會被當成檔名找不到）→ 用初始化腳本帶過去
     let tab = serde_json::to_string(&tab.unwrap_or_default()).map_err(db::err)?;
-    WebviewWindowBuilder::new(&app, "hub", WebviewUrl::App("index.html".into()))
+    WebviewWindowBuilder::new(app, "hub", WebviewUrl::App("index.html".into()))
         .initialization_script(format!("window.__bookEnTab = {tab};"))
         .title("book-en 學習中心")
         .inner_size(1000.0, 760.0)
@@ -54,6 +52,13 @@ async fn open_hub(app: tauri::AppHandle, tab: Option<String>) -> Result<(), Stri
         .build()
         .map_err(db::err)?;
     Ok(())
+}
+
+// 打開學習中心（單字庫 / 複習 / 設定）；已開就帶到前景。
+// 必須是 async：Windows 上在同步指令裡建立視窗會死結（視窗卡在 about:blank、invoke 永不返回）。
+#[tauri::command]
+async fn open_hub(app: tauri::AppHandle, tab: Option<String>) -> Result<(), String> {
+    show_hub(&app, tab)
 }
 
 // 學習中心 → 主視窗跳到影片的某一秒（複習時聽原句）
@@ -101,15 +106,27 @@ fn main() {
             levels::set_word_status,
             levels::vocab_ranks,
             levels::level_counts,
+            dictfile::dict_status,
+            dictfile::dict_download,
+            examples::examples_for,
+            examples::ai_examples,
         ])
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
             let user_db = db::open_user_db(&data_dir.join("book-en.db"))?;
+            // 使用者選過「不下載，繼續使用」就不再自動跳出字典畫面
+            let skip_prompt = user_db
+                .query_row("SELECT value FROM settings WHERE key = 'dictPrompt'", [], |r| r.get::<_, String>(0))
+                .map(|v| v == "skip")
+                .unwrap_or(false);
             app.manage(db::Db(Mutex::new(user_db)));
 
-            let dict_path = app.path().resolve("resources/ecdict.db", BaseDirectory::Resource)?;
-            app.manage(db::Dict(Mutex::new(db::open_dict(&dict_path)?)));
+            // 字典找不到也照樣開：查字 / 分級 / 例句庫停用，可在學習中心下載
+            let (dict, dict_path) = dictfile::open_any(app.handle());
+            let missing = dict.is_none();
+            app.manage(db::Dict(Mutex::new(dict)));
+            app.manage(dictfile::DictPath(Mutex::new(dict_path)));
 
             WebviewWindowBuilder::new(app, "main", WebviewUrl::External(START_URL.parse()?))
                 .title("book-en")
@@ -117,6 +134,9 @@ fn main() {
                 .min_inner_size(900.0, 600.0)
                 .initialization_script(overlay_js())
                 .build()?;
+            if missing && !skip_prompt {
+                show_hub(app, Some("dict".into()))?;
+            }
             Ok(())
         })
         .run(tauri::generate_context!())

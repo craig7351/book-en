@@ -88,7 +88,7 @@ export function WordsTab() {
                       onClick={() => {
                         seekCue(e.cueIdx)
                         pauseVideo()
-                        store.set({ card: { word: e.form, cueIdx: e.cueIdx } })
+                        store.set({ card: { word: e.form, cueIdx: e.cueIdx }, cardHistory: [] })
                       }}
                     >
                       {e.lemma}

@@ -1,6 +1,6 @@
 // 詞頻分級（M9）：wordfreq 原形家族排名 + 個人狀態（已知 / 學習中 / 不要學）。
 // 排名在離線字典 ecdict.db 的 freq / lemma_rank 表（tools/build-freq.py 產生）；個人狀態在使用者資料庫。
-use crate::db::{err, now_ms, Db, Dict};
+use crate::db::{err, now_ms, Db, Dict, NO_DICT};
 use crate::dict::normalize;
 use rusqlite::{params, OptionalExtension};
 use serde::Serialize;
@@ -55,26 +55,33 @@ fn statuses(db: &rusqlite::Connection) -> rusqlite::Result<HashMap<String, Strin
     Ok(out)
 }
 
-// 一支影片的所有字一次查（約 1–2 千個不重複字）；同時記錄「看過的字」給詞彙頁統計
+// 一支影片的所有字一次查（約 1–2 千個不重複字）；同時記錄「看過的字」給詞彙頁統計。
+// record_seen = false：例句裡的字（不是使用者在影片中遇到的，不算進統計）。
+// 沒有離線字典時照樣回傳（原形 = 字本身、沒有排名），個人狀態仍有效。
 #[tauri::command]
 pub fn word_info(
     db: State<'_, Db>,
     dict: State<'_, Dict>,
     words: Vec<String>,
     video_id: Option<String>,
+    record_seen: Option<bool>,
 ) -> Result<Vec<WordInfo>, String> {
     let mut infos = Vec::with_capacity(words.len());
     {
-        let dict = dict.0.lock().map_err(err)?;
+        let guard = dict.0.lock().map_err(err)?;
         for raw in words {
             let word = normalize(&raw);
             if word.is_empty() {
                 continue;
             }
-            let (lemma, rank) = lemma_and_rank(&dict, &word).map_err(err)?;
+            let (lemma, rank) = match guard.as_ref() {
+                Some(conn) => lemma_and_rank(conn, &word).map_err(err)?,
+                None => (word.clone(), None),
+            };
             infos.push(WordInfo { word, lemma, rank, status: None });
         }
     }
+    let record_seen = record_seen.unwrap_or(true);
     let conn = db.0.lock().map_err(err)?;
     let st = statuses(&conn).map_err(err)?;
     let now = now_ms();
@@ -84,7 +91,7 @@ pub fn word_info(
     let mut done = HashSet::new();
     for info in &mut infos {
         info.status = st.get(&info.lemma).cloned();
-        if info.rank.is_some() && done.insert(info.lemma.clone()) {
+        if record_seen && info.rank.is_some() && done.insert(info.lemma.clone()) {
             seen.execute(params![info.lemma, info.rank, video_id, now]).map_err(err)?;
         }
     }
@@ -128,7 +135,8 @@ pub struct RankedWord {
 #[tauri::command]
 pub fn vocab_ranks(db: State<'_, Db>, dict: State<'_, Dict>, from: i64, to: i64) -> Result<Vec<RankedWord>, String> {
     let rows: Vec<(String, i64)> = {
-        let dict = dict.0.lock().map_err(err)?;
+        let guard = dict.0.lock().map_err(err)?;
+        let dict = guard.as_ref().ok_or(NO_DICT)?;
         let mut stmt = dict
             .prepare("SELECT lemma, rank FROM lemma_rank WHERE rank BETWEEN ?1 AND ?2 ORDER BY rank")
             .map_err(err)?;
@@ -193,14 +201,22 @@ pub fn level_counts(
     }
     // 手動標已知、但不在自動已知範圍內的字（含沒排名的）也算進詞彙量
     let known_beyond_auto = {
-        let dict = dict.0.lock().map_err(err)?;
-        let mut stmt = dict.prepare_cached("SELECT rank FROM lemma_rank WHERE lemma = ?1").map_err(err)?;
+        let guard = dict.0.lock().map_err(err)?;
         let mut n = 0;
         for (lemma, s) in &st {
             if s != "known" {
                 continue;
             }
-            let rank: Option<i64> = stmt.query_row([lemma], |r| r.get(0)).optional().map_err(err)?;
+            // 沒有字典就不知道排名 → 一律算進去
+            let rank: Option<i64> = match guard.as_ref() {
+                Some(dict) => dict
+                    .prepare_cached("SELECT rank FROM lemma_rank WHERE lemma = ?1")
+                    .map_err(err)?
+                    .query_row([lemma], |r| r.get(0))
+                    .optional()
+                    .map_err(err)?,
+                None => None,
+            };
             if rank.map_or(true, |r| r > known_max) {
                 n += 1;
             }

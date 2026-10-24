@@ -193,6 +193,163 @@
   color: var(--muted);
 }
 
+.card .icon.tiny {
+  font-size: 12px;
+  padding: 0 4px;
+  vertical-align: middle;
+}
+
+.card .icon.back {
+  font-size: 18px;
+  margin-right: 4px;
+  vertical-align: 3px;
+}
+
+.context .label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 詞頻上色（單字卡內：原句與例句） */
+.card .w {
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.card .w:hover {
+  background: var(--accent-soft);
+}
+
+.card .w.saved {
+  color: var(--saved);
+  background: var(--saved-bg);
+}
+
+.card .w.suggest {
+  color: var(--accent);
+  text-decoration: underline 2px;
+  text-underline-offset: 3px;
+}
+
+.card .w.rare {
+  opacity: 0.55;
+}
+
+.card .w.target,
+.card .w.picked {
+  font-weight: 700;
+  outline: 1.5px solid var(--accent);
+  outline-offset: 1px;
+  opacity: 1;
+}
+
+.card .w.speaking {
+  background: #fde68a;
+  color: #111;
+}
+
+/* 例句 */
+.examples {
+  margin-top: 12px;
+}
+
+.ex-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ex-slow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.ex-group {
+  margin-top: 6px;
+}
+
+.ex-title {
+  font-size: 11px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+}
+
+.ex-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.ex-btns {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.ex-btns .icon {
+  font-size: 13px;
+  padding: 0 4px;
+}
+
+.ex-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ex-meta {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ex-ai {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ex-ai button,
+.no-dict button {
+  font: inherit;
+  font-size: 12px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+
+.no-dict {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px dashed var(--line);
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.error {
+  color: #dc2626;
+}
+
+.small {
+  font-size: 12px;
+}
+
 .ai {
   margin-top: 10px;
   padding: 8px 10px;

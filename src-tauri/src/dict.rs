@@ -1,5 +1,5 @@
 // 查字典：離線 ECDICT（中文釋義、音標、詞形）+ 線上 dictionaryapi.dev（發音音檔、英英例句）。
-use crate::db::{err, Dict};
+use crate::db::{err, Dict, NO_DICT};
 use rusqlite::{params, OptionalExtension, Row};
 use serde::Serialize;
 use tauri::State;
@@ -82,8 +82,9 @@ pub fn lookup_in(conn: &rusqlite::Connection, raw: &str) -> rusqlite::Result<Loo
 
 #[tauri::command]
 pub fn dict_lookup(dict: State<'_, Dict>, word: String) -> Result<LookupResult, String> {
-    let conn = dict.0.lock().map_err(err)?;
-    lookup_in(&conn, &word).map_err(err)
+    let guard = dict.0.lock().map_err(err)?;
+    let conn = guard.as_ref().ok_or(NO_DICT)?;
+    lookup_in(conn, &word).map_err(err)
 }
 
 #[derive(Serialize, Default)]
@@ -114,10 +115,12 @@ pub async fn dict_online(word: String) -> Result<OnlineInfo, String> {
         .timeout(std::time::Duration::from_secs(10))
         .build()
         .map_err(err)?;
-    let Ok(res) = client.get(url).send().await else { return Ok(OnlineInfo::default()) };
-    if !res.status().is_success() {
-        return Ok(OnlineInfo::default());
-    }
+    // dictionaryapi.dev 偶爾整個掛掉（Cloudflare 530）→ 改用 Datamuse（只有英英釋義、沒有音檔）
+    let res = match client.get(url).send().await {
+        Ok(r) if r.status().is_success() => r,
+        Ok(r) if r.status().as_u16() == 404 => return Ok(OnlineInfo::default()), // 真的查無此字
+        _ => return Ok(datamuse(&client, &word).await.unwrap_or_default()),
+    };
     let data: serde_json::Value = res.json().await.map_err(err)?;
     let entries = data.as_array().cloned().unwrap_or_default();
     let mut info = OnlineInfo::default();
@@ -149,4 +152,27 @@ pub async fn dict_online(word: String) -> Result<OnlineInfo, String> {
         }
     }
     Ok(info)
+}
+
+// 備援：Datamuse（https://www.datamuse.com/api/），defs 格式 "n\t定義"
+async fn datamuse(client: &reqwest::Client, word: &str) -> Option<OnlineInfo> {
+    let url = format!("https://api.datamuse.com/words?sp={word}&md=d&max=1");
+    let data: serde_json::Value = client.get(url).send().await.ok()?.json().await.ok()?;
+    let defs = data.get(0)?.get("defs")?.as_array()?.clone();
+    let pos_name = |tag: &str| match tag {
+        "n" => "noun",
+        "v" => "verb",
+        "adj" => "adjective",
+        "adv" => "adverb",
+        _ => "",
+    };
+    let senses = defs
+        .iter()
+        .filter_map(|d| {
+            let (tag, def) = d.as_str()?.split_once('\t')?;
+            Some(Sense { pos: pos_name(tag).to_string(), definition: def.trim().to_string(), example: None })
+        })
+        .take(4)
+        .collect();
+    Some(OnlineInfo { audio_url: None, phonetic: None, senses })
 }

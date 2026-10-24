@@ -18,6 +18,7 @@ export function Panel() {
   const fullscreen = useStore((s) => s.fullscreen)
   const due = useStore((s) => s.due)
   const tab = useStore((s) => s.tab)
+  const dictMissing = useStore((s) => s.dictMissing)
 
   useEffect(() => {
     document.documentElement.classList.toggle('be-open', open)
@@ -44,6 +45,12 @@ export function Panel() {
           ⟩
         </button>
       </header>
+      {dictMissing && (
+        <div className="dict-banner">
+          離線字典未安裝：中文釋義、單字分級、例句庫無法使用
+          <button onClick={() => api.openHub('dict')}>下載字典</button>
+        </div>
+      )}
       {captions.status === 'ready' && <Controls />}
       {captions.status === 'ready' && <Tabs />}
       {captions.status === 'ready' && tab === 'words' ? <WordsTab /> : <Body state={captions} />}
