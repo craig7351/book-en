@@ -434,6 +434,98 @@ P1 先只做 1 個物種，確認整個流程好玩、數值合理，再補美�
 
 ---
 
+## 4.8 M12 Kokoro：離線的自然語音（計畫）
+
+> 目標：句子也能用自然的英文語音念，**不用帳號、不用金鑰、離線可用**，取代電腦內建語音。
+> 狀態：計畫中。可行性測試已做（2026-10-25，測試腳本與樣本在開發機的暫存資料夾，未進版控）。
+
+### 為什麼是 Kokoro
+
+- [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)：8,200 萬參數的開源語音模型，**Apache-2.0**，英文 28 個聲音（美式 20、英式 8）。
+- 官方提供 ONNX 版（[onnx-community/Kokoro-82M-v1.0-ONNX](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX)），可以用 ONNX Runtime 在 CPU 上跑。
+- 比較：Azure／Google 要帳號和金鑰；系統語音在這台電腦根本沒有英文。
+
+### ⚠️ 不能直接用 kokoro-js
+
+官方的 JavaScript 套件 kokoro-js 用 `phonemizer` 套件把文字轉成音標，它裡面是 **eSpeak NG（GPL-3.0）**。
+包進 App 會讓 book-en 的散布要遵守 GPL，和 MIT 授權衝突。→ **改用 Kokoro 作者自己的 G2P 詞典 [misaki](https://github.com/hexgrad/misaki)（Apache-2.0）**，不用 eSpeak。
+
+### 可行性測試結果（Node + onnxruntime-node，16 核 CPU）
+
+**1. 不用 eSpeak 可以運作**：misaki 詞典查音標 → 對照 `config.json` 的 vocab 轉成 token → 模型 → 24 kHz 音訊。
+
+**2. 速度（念一句 3.7 秒的句子要算多久）：**
+| 模型檔 | 大小 | 時間 | 倍速 |
+|---|---|---|---|
+| `model_quantized.onnx`（8-bit） | 92 MB | 2,270 ms | 0.6× 即時（比念的還慢） |
+| `model_q8f16.onnx` | 86 MB | 2,340 ms | 0.6× |
+| **`model_fp16.onnx`** | **163 MB** | **750 ms** | **5× 即時** |
+
+8-bit 量化版在 CPU 上反而慢 3 倍（量化對這個模型的卷積層沒幫助）。調 CPU 執行緒數沒有差別。
+
+**3. 詞典涵蓋率**：用 App 的 52,841 句 Tatoeba 例句測，查不到的字只有 **0.72%**（4.5% 的句子有至少一個）。
+查不到的主要是：縮寫（TV、PC、USA）、`-ies` 複數（countries、cities）、`'ve` `'re` 縮寫、人名地名、序數（5th）。前幾類補規則就能解決，剩下的人名用拼讀規則備援。
+
+**4. 要另外處理**：冠詞 a（ɐ）、the 在母音前（ði）、多音字（read、live：詞典有依詞性的版本，先用預設值）、數字轉英文。英式聲音要用英式詞典（`gb_gold` / `gb_silver`）。
+
+### 架構
+
+```
+畫面（speak.ts）── invoke('tts_kokoro', 文字, 聲音, 速度) ──► Rust
+                                                            ├ G2P：misaki 詞典（記憶體裡）＋規則
+                                                            ├ ONNX Runtime（ort crate）跑 Kokoro
+                                                            ├ 編成 WAV（或 Ogg）
+                                                            └ 磁碟快取：同一句不重算
+畫面拿到音訊 → <audio> 播放；念到哪個字用「時間比例」估計
+```
+
+- **在 Rust 跑，不在網頁裡跑**：YouTube 面板和學習中心都能用同一個指令；原生 ONNX Runtime 比網頁版 WASM 快很多；YouTube 頁面不用載入大型 WASM。
+- **字詞亮起來**：模型不輸出每個字的時間 → 依各字音標長度占整句的比例，對照播放時間估算。
+- **快取**：`app_data/tts-cache/`，鍵 = 文字＋聲音＋速度的雜湊，上限 200 MB，舊的先刪。
+- **長句**：模型一次最多 510 個 token → 依標點切段，分段算、接起來。
+
+### 下載（和離線字典同一套做法）
+
+App 本體不變大，在「設定 → 發音」按「下載 Kokoro 語音」才下載：
+| 檔案 | 大小 | 來源 |
+|---|---|---|
+| 模型（fp16） | 163 MB | Hugging Face（固定版本＋sha256） |
+| misaki 詞典（美式＋英式） | 約 13 MB（壓縮後約 3 MB） | GitHub（固定版本＋sha256） |
+| 聲音檔 | 每個 0.5 MB，先放 8 個約 4 MB | Hugging Face |
+| ONNX Runtime 函式庫 | 約 10–15 MB | 見下方「要決定的事」2 |
+
+### 設定畫面
+
+「發音」區多一個「語音合成引擎」：
+- 系統語音（現在的做法）
+- **Kokoro（離線自然語音）**：沒下載時顯示下載按鈕和進度；下載後可以選聲音（美式女 Heart、Bella，美式男 Michael、Fenrir，英式女 Emma，英式男 George…），每個都能試聽。
+- 「口音」設定一起套用：美式口音預設 Heart，英式預設 Emma。
+- 單字的「真人錄音優先」照舊；沒有錄音時用 Kokoro 念。
+
+### 分階段
+
+| 階段 | 內容 |
+|---|---|
+| **K1 Rust 引擎** | `ort` 載入模型（第一次用到時才載入）、G2P（詞典＋規則＋數字）、`tts_kokoro` 指令、WAV 輸出；單元測試（音標、token、長句切段） |
+| **K2 下載** | manifest（網址、sha256、大小）、進度、放到 App 資料夾；下載完不用重開 |
+| **K3 畫面** | 設定的引擎和聲音選單、試聽；`speak.ts` 改走 Kokoro；🔊 按下到出聲之間顯示轉圈；字詞亮起來 |
+| **K4 收尾** | 磁碟快取、CI 三平台（ONNX Runtime 各平台的函式庫）、貢獻頁標註（Kokoro、misaki、ONNX Runtime 授權） |
+
+### 風險
+
+- **較慢的電腦**：測試機 16 核，一句約 0.4–1.2 秒；4 核筆電可能 2–3 秒。對策：快取、先念短句、顯示轉圈。
+- **G2P 品質**：沒有 eSpeak，詞典查不到的字（多半是人名）靠規則，可能念錯；多音字依詞性可能選錯。
+- **ONNX Runtime 跨平台**：Windows 已驗證（Node 版），macOS／Linux 要在 CI 驗證。
+- **記憶體**：模型載入後約 300–400 MB，閒置一段時間後釋放。
+
+### 要決定的事
+
+1. **模型用哪個**：fp16（163 MB、快，**建議**）或 q8f16（86 MB、念一句要等 2 秒以上）。
+2. **ONNX Runtime 放哪裡**：跟模型一起下載（安裝檔維持約 18 MB，**建議**）或直接包進安裝檔（安裝檔變約 35 MB，但比較單純）。
+3. **預設聲音**：先聽樣本再決定。
+
+---
+
 ## 5. 專案結構
 
 ```
