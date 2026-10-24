@@ -1,0 +1,125 @@
+# book-en
+
+用 YouTube 學英文的桌面 App。直接在真正的 youtube.com 上加入雙語字幕、逐句精聽、點字查詢、單字分級，以及單字庫與間隔重複複習。
+
+技術：Tauri v2 + 系統 WebView（Windows 上是 WebView2）。App 載入 youtube.com，再把學習介面（React）注入頁面。
+
+## 功能
+
+**看影片（YouTube 頁面）**
+- **雙語字幕：** 英文字幕自動斷句，中文字幕可選以下來源：
+  - YouTube 中文字幕
+  - Google 自動翻譯
+  - AI 翻譯（Claude）
+  - 已存檔的翻譯
+- **逐句精聽：**
+  - 每句自動暫停、重播、循環，調整速度
+  - 快捷鍵：<kbd>A</kbd> 上一句、<kbd>S</kbd> 重播、<kbd>D</kbd> 下一句
+- **單字分級：** 依 wordfreq 詞頻排名，把字幕裡的字標成基礎、建議學習、罕見三級，你的程度可以自己設。
+- **點字查詢：** 單字卡內容如下：
+  - 中文釋義、音標、原形（running → run）、考試標籤
+  - 英英釋義和發音
+  - AI 句中解釋
+- **例句：**
+  - 本片其他含這個字的句子，可以只播那一句
+  - 離線例句庫（Tatoeba）
+  - AI 例句
+- **其他：** 網址列、上一頁／下一頁、書籤、字幕大小調整
+
+**學習中心（獨立視窗）**
+- **單字庫：** 收藏的單字和句子，點一下就跳回影片中出現的那一秒。
+- **複習：** 用 SM-2 間隔重複，共有 4 種題型。
+- **詞彙：** 依常用度分區瀏覽，可以整區標成「已知」。
+- **設定：** 包括資料來源與授權（「貢獻」分頁）。
+
+## 安裝（Windows）
+
+1. 安裝 `book-en_x.y.z_x64-setup.exe`（從原始碼打包的方式見下方）。
+2. 第一次開啟時，如果找不到離線字典，App 會詢問要不要從 [GitHub Release `dict-v1`](https://github.com/craig7351/book-en/releases/tag/dict-v1) 下載。下載檔約 22 MB，解壓後 50 MB，App 會自動驗證檢查碼。
+   - 選擇不下載也能用：看影片、字幕、翻譯、英英釋義、AI 功能、收藏和複習都照常。
+   - 沒有字典時不能用的功能：中文釋義、單字分級、詞彙頁、例句庫。
+
+### AI 功能（選用）
+
+AI 翻譯、AI 解釋、AI 例句會呼叫本機的 [Claude Code](https://www.anthropic.com/claude-code) CLI（`claude -p`），用你已登入的帳號，不需要 API key。
+
+- 先安裝 Claude Code，並在終端機登入一次。
+- 模型可以在設定裡選（預設 Haiku）。
+- 翻譯結果會存檔，同一支影片不會重複翻譯。
+
+## 從原始碼建置
+
+需要 [Node.js](https://nodejs.org) 22.5 以上（建字典的腳本用到 `node:sqlite`）和 [Rust](https://rustup.rs)，Windows 另需 WebView2（Windows 11 內建）。
+
+```bash
+npm install
+
+# 離線字典：打包時會一起放進安裝檔，請先準備好
+curl -L -o ecdict.db.gz https://github.com/craig7351/book-en/releases/download/dict-v1/ecdict.db.gz
+gunzip -c ecdict.db.gz > src-tauri/resources/ecdict.db
+
+npm run dev      # 開發版
+npm run build    # 正式版 → src-tauri/target/release/bundle/nsis/
+```
+
+- 改了注入頁面（`src/overlay`）：重跑 `npm run build:overlay`，再重開 App。開發版每次啟動都會重新讀取，不用重新編譯 Rust。
+- 改了學習中心（`src/hub`）：要 `npm run build:hub`，再重新編譯 Rust。這部分是編譯時嵌進程式的。
+- 測試：`cargo test --manifest-path src-tauri/Cargo.toml`
+
+### 自己重建離線字典
+
+```bash
+# 1. ECDICT 英漢詞典
+curl -L -o .cache/ecdict.csv https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict.csv
+node tools/build-ecdict.mjs
+
+# 2. 詞頻排名與 3. Tatoeba 例句（Python）
+python -m venv .cache/venv
+.cache/venv/Scripts/python -m pip install wordfreq opencc-python-reimplemented
+.cache/venv/Scripts/python tools/build-freq.py
+.cache/venv/Scripts/python tools/build-examples.py    # Tatoeba 資料的下載方式見腳本開頭
+
+# 4. 壓縮並更新 src-tauri/dict-manifest.json 的檢查碼
+node tools/package-dict.mjs
+```
+
+順序不能換，因為 `build-ecdict.mjs` 會重建整個資料庫。
+
+字典內容有變動時，要發新的 Release（例如 `dict-v2`），並更新 `dict-manifest.json` 的網址。不要覆蓋舊檔，否則舊版 App 比對檢查碼會失敗。
+
+## 專案結構
+
+```
+src/overlay/     注入 youtube.com 的介面：字幕擷取、雙語字幕、面板、單字卡
+src/hub/         學習中心：單字庫、複習、詞彙、設定、字典下載
+src/shared/      共用：API、型別、分級、斷詞、朗讀
+src-tauri/src/   Rust 後端：SQLite、字典、翻譯（claude -p）、複習排程、字典下載
+tools/           建字典的腳本、CDP 測試工具
+```
+
+資料位置：
+- 使用者資料庫：`%APPDATA%\dev.booken.app\book-en.db`，存設定、收藏、複習紀錄、翻譯快取。
+- AI 字幕存檔：exe 同目錄的 `subtitles\`，不能寫入時改存 `%APPDATA%\dev.booken.app\subtitles\`。
+
+開發筆記與踩過的坑在 [`PLAN.md`](PLAN.md)、[`README_AI.md`](README_AI.md)。
+
+## 平台支援
+
+| 平台 | 狀態 |
+|---|---|
+| Windows 10 / 11 | ✅ 主要開發與測試平台 |
+| macOS | ⚠️ 程式碼大致可移植，尚未測試 |
+| Linux | ⚠️ 尚未測試，YouTube 播放可能需要額外的 GStreamer 套件 |
+
+## 授權
+
+程式碼以 [MIT](LICENSE) 授權釋出。離線字典（`ecdict.db`）包含第三方資料，依各自的授權散布：
+
+- [ECDICT](https://github.com/skywind3000/ECDICT)：MIT
+- [wordfreq](https://github.com/rspeer/wordfreq)：資料採 CC BY-SA 4.0，其中包含 SUBTLEX、OpenSubtitles 等語料。由它衍生的排名資料同樣以 CC BY-SA 4.0 提供。
+- [Tatoeba](https://tatoeba.org)：CC BY 2.0 FR
+- [Free Dictionary API](https://dictionaryapi.dev)、[Datamuse](https://www.datamuse.com/api/)：線上英英釋義
+
+完整清單見 App 的「設定 → 貢獻」。
+
+YouTube 影片與字幕的權利屬於 YouTube／Google 和原作者。book-en 只在播放器內讀取字幕供個人學習，不下載影片，也不散布字幕。
