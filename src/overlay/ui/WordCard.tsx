@@ -6,7 +6,7 @@ import { Examples } from './Examples'
 import { WordText } from './WordText'
 import type { DictEntry, LookupResult, OnlineInfo } from '../../shared/types'
 import { fmtRank, LEVEL_LABEL, levelOf, rankBar } from '../../shared/levels'
-import { infoOf, markLearning, refreshSaved, setWordStatus } from '../controller'
+import { cheerPet, infoOf, markLearning, refreshSaved, setWordStatus } from '../controller'
 import { cuesOf, store, useStore } from '../store'
 import { getVideoTitle } from '../youtube'
 
@@ -126,6 +126,7 @@ export function WordCard() {
       // 原本標成已知 / 不要學的字改為學習中
       if (status === 'known' || status === 'ignore') await setWordStatus(lemmaKey, null)
       markLearning(lemmaKey)
+      cheerPet()
       setMsg(`已收藏「${headWord}」，會出現在複習中`)
     } catch (e) {
       setMsg(errorText(e))

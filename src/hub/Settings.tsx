@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { api, errorText } from '../shared/api'
 import { DEFAULT_LEVELS, fmtRank, KNOWN_MAX_OPTIONS, SUGGEST_MAX_OPTIONS } from '../shared/levels'
+import { game, gameErrorText, type GameState } from '../shared/game'
+import { Pixel } from '../shared/PixelArt'
+import { eggSprite, petSprite, SPECIES, SPECIES_INFO, type Species } from '../shared/sprites'
 import { MODELS, type DictStatus } from '../shared/types'
 
 type SubTab = 'general' | 'credits'
 
 // 設定：一般 / 貢獻（資料來源與授權）
-export function Settings() {
+export function Settings({ gs, onGameChange }: { gs: GameState | null; onGameChange: () => void }) {
   const [sub, setSub] = useState<SubTab>('general')
   return (
     <section className="settings">
@@ -18,13 +21,13 @@ export function Settings() {
           貢獻
         </button>
       </nav>
-      {sub === 'general' ? <General /> : <Credits />}
+      {sub === 'general' ? <General gs={gs} onGameChange={onGameChange} /> : <Credits />}
     </section>
   )
 }
 
 // 偏好設定與 YouTube 面板共用（存在 Rust 端 settings 表的 prefs）
-function General() {
+function General({ gs, onGameChange }: { gs: GameState | null; onGameChange: () => void }) {
   const [prefs, setPrefs] = useState<Record<string, unknown>>({})
   const [claude, setClaude] = useState<string>('檢查中…')
   const [dict, setDict] = useState<DictStatus | null>(null)
@@ -114,6 +117,8 @@ function General() {
         </select>
       </label>
 
+      <GameSection gs={gs} onChange={onGameChange} />
+
       <h2>快捷鍵（YouTube 影片頁）</h2>
       <table className="keys">
         <tbody>
@@ -126,6 +131,98 @@ function General() {
         </tbody>
       </table>
     </>
+  )
+}
+
+// 遊戲模式：預設關閉；第一次打開時選一顆蛋
+function GameSection({ gs, onChange }: { gs: GameState | null; onChange: () => void }) {
+  const [picking, setPicking] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+  const on = !!gs?.options.enabled
+
+  async function run(fn: () => Promise<unknown>) {
+    setMsg(null)
+    try {
+      await fn()
+      onChange()
+    } catch (e) {
+      setMsg(gameErrorText(e))
+    }
+  }
+
+  function toggle() {
+    if (on) return void run(() => game.disable())
+    // 第一次（沒有寵物也沒有蛋）要先選蛋
+    if (gs && !gs.pets.length && !gs.eggs.length) return setPicking(true)
+    void run(() => game.enable())
+  }
+
+  return (
+    <>
+      <h2>遊戲模式</h2>
+      <label className="row switch-row">
+        <span>寵物養成</span>
+        <input type="checkbox" checked={on} onChange={toggle} />
+        <span className="muted small">{on ? '開啟' : '關閉'}</span>
+      </label>
+      <p className="muted">
+        開啟後，「到期的字」複習答對會讓寵物長大、賺金幣買配件。關閉時所有遊戲畫面都會隱藏，資料會保留。
+      </p>
+      {on && gs && (
+        <>
+          <label className="row switch-row">
+            <span>YouTube 面板陪伴</span>
+            <input
+              type="checkbox"
+              checked={gs.options.companion}
+              onChange={(e) => run(() => game.options({ companion: e.target.checked }))}
+            />
+            <span className="muted small">在影片旁的面板角落顯示迷你寵物</span>
+          </label>
+          <label className="row switch-row">
+            <span>8-bit 音效</span>
+            <input
+              type="checkbox"
+              checked={gs.options.sound}
+              onChange={(e) => run(() => game.options({ sound: e.target.checked }))}
+            />
+            <span className="muted small">答對、升級、孵化時的短音效</span>
+          </label>
+        </>
+      )}
+      {msg && <p className="msg error">{msg}</p>}
+      {picking && (
+        <EggPicker
+          onCancel={() => setPicking(false)}
+          onPick={(s) => {
+            setPicking(false)
+            void run(() => game.enable(s))
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+function EggPicker({ onPick, onCancel }: { onPick: (s: Species) => void; onCancel: () => void }) {
+  const [hover, setHover] = useState<Species | null>(null)
+  return (
+    <div className="modal-backdrop" onClick={onCancel}>
+      <div className="modal egg-picker" onClick={(e) => e.stopPropagation()}>
+        <h2>選一顆蛋</h2>
+        <p className="muted">到期複習答對 30 題就會孵化。之後還能拿到其他的蛋。</p>
+        <div className="eggs">
+          {SPECIES.map((s) => (
+            <button key={s} className="egg-choice" onMouseEnter={() => setHover(s)} onFocus={() => setHover(s)} onClick={() => onPick(s)}>
+              <Pixel sprite={hover === s ? petSprite({ species: s, stage: 1, mood: 'happy' }) : eggSprite(s)} scale={3} />
+              <b>{SPECIES_INFO[s].name}</b>
+              <span className="muted small">{SPECIES_INFO[s].desc}</span>
+            </button>
+          ))}
+        </div>
+        <button onClick={onCancel}>先不要</button>
+      </div>
+    </div>
   )
 }
 

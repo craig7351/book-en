@@ -205,3 +205,16 @@ Haiku 翻 3 句約 3.6 秒；回覆在 JSON 的 `result` 欄位。
 - 非 Windows 的 `claude`：GUI App 的 PATH 很陽春 → `claude.rs` 的 `unix_path()` 補 `~/.local/bin`、Homebrew、npm global、nvm 等位置。
 - AI 字幕只有 Windows 存 exe 同目錄；macOS 寫進 .app 會破壞簽章，Linux 執行檔目錄不可寫。
 - macOS、Linux 版尚未實機測試（WKWebView / WebKitGTK 上的字幕擷取、面板版面、TTS boundary 事件都待確認）。
+
+## M11 遊戲模式：寵物養成（2026-10-24）
+
+- 規則全在 `src-tauri/src/game.rs`（有單元測試：曲線、關閉時不寫入、孵化、升級、分支、連續保護、里程碑、配件位置）。
+  前端只顯示：`src/shared/game.ts`（型別、指令、WebAudio 音效）、`src/hub/Pet.tsx`、`src/hub/Companion.tsx`、`src/overlay/ui/PanelPet.tsx`。
+- **關閉時不寫入任何遊戲資料**：`review_grade`、`item_add` 只在 `game::enabled()` 時呼叫獎勵。遊戲選項存在 settings 的 `game`（由 Rust 擁有，畫面用 `game_options` 改）。
+- 日期：畫面傳「當地今天 0 點」（`dayStart`）；`sane_day` 擋掉離譜值。CDP 測試時呼叫 `game_state` 也要傳 dayStart，傳 null 會退回 UTC 的今天、看起來像資料不見。
+- `review_grade` 現在回傳 `{ item, reward }`；評分前 `due_at <= now` 才算「到期」。答錯後同一輪再考那題已不是到期 → 算練習。
+- 連續天數：當天到期複習 ≥ 10 題、或清空當天到期、或練習 ≥ 10 題。`settle()` 在每次讀狀態時結算到昨天，沒達標的日子自動用保護。
+- 像素圖：`src/shared/pixel.ts`（畫布、描邊、快取成 data URL）、`src/shared/sprites.ts`（4 物種 × 寶寶 / 少年 / 成年 4 分支、配件、蛋、場景）。
+  預覽：學習中心網址加 `#sprites`。描邊之後才畫的特效（音波、星星）放在 `branchFx`。
+- YouTube 頁（main capability）只開放 `game_state`；改設定、買東西都在學習中心。
+- **測試用的資料夾**：環境變數 `BOOKEN_DATA_DIR` 改放使用者資料庫，測試遊戲時不要碰到使用者自己的 `%APPDATA%` 資料。

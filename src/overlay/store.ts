@@ -1,6 +1,8 @@
 // 面板與字幕層共用的狀態（兩者是不同的 React root，用外部 store 同步）
 import { useSyncExternalStore } from 'react'
+import type { EggView, PetView } from '../shared/game'
 import { DEFAULT_LEVELS, type WordInfo } from '../shared/levels'
+import type { Mood } from '../shared/sprites'
 import type { Cue } from './cues'
 import type { CaptionResult, ZhKind } from './youtube'
 
@@ -66,6 +68,15 @@ export interface State {
   due: number
   words: Map<string, WordInfo> // 本片每個字（小寫字面）的原形、排名、個人狀態
   tab: 'subs' | 'words' // 面板分頁：字幕 / 詞語
+  pet: PanelPet | null // 遊戲模式＋面板陪伴都開啟時才有
+  petCheer: number // 每次收藏 +1，讓迷你寵物跳一下
+}
+
+export interface PanelPet {
+  pet: PetView | null
+  egg: EggView | null
+  mood: Mood
+  sound: boolean
 }
 
 type Listener = () => void
@@ -89,6 +100,8 @@ let state: State = {
   due: 0,
   words: new Map(),
   tab: 'subs',
+  pet: null,
+  petCheer: 0,
 }
 const listeners = new Set<Listener>()
 

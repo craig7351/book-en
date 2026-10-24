@@ -2,9 +2,13 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-youtube",
   "description": "主視窗載入 youtube.com；只授權 YouTube 網域、且只開放面板需要的指令",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "remote": {
-    "urls": ["https://*.youtube.com/*"]
+    "urls": [
+      "https://*.youtube.com/*"
+    ]
   },
   "permissions": [
     "allow-ping",
@@ -30,6 +34,7 @@
     "allow-set-word-status",
     "allow-dict-status",
     "allow-examples-for",
-    "allow-ai-examples"
+    "allow-ai-examples",
+    "allow-game-state"
   ]
 }

@@ -607,3 +607,68 @@ button.primary {
 .card-backdrop {
   position: fixed;
 }
+
+/* 遊戲模式：面板角落的迷你寵物 */
+.panel-pet {
+  position: absolute;
+  right: 26px; /* 避開字幕清單的捲軸 */
+  bottom: 12px;
+  z-index: 5;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.pet-bubble {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  white-space: nowrap;
+  line-height: 1.4;
+  font-size: 12px;
+  background: #fff8db;
+  color: #8a5a00;
+  border: 1px solid #f3d27a;
+  border-radius: 8px;
+  padding: 1px 8px;
+  animation: pet-bubble 2s ease-out forwards;
+}
+
+@keyframes pet-bubble {
+  0% { opacity: 0; transform: translateY(6px); }
+  15%, 75% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+.px-idle {
+  animation: px-idle 1.4s steps(2) infinite;
+}
+
+.px-hop {
+  animation: px-hop 0.5s ease-out 2;
+}
+
+.px-wobble {
+  animation: px-wobble 2.4s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+@keyframes px-idle {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+@keyframes px-hop {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  30% { transform: translateY(-10px) scale(0.95, 1.05); }
+  60% { transform: translateY(0) scale(1.06, 0.94); }
+}
+
+@keyframes px-wobble {
+  0%, 70%, 100% { transform: rotate(0); }
+  76% { transform: rotate(-8deg); }
+  82% { transform: rotate(7deg); }
+  88% { transform: rotate(-4deg); }
+}

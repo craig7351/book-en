@@ -9,7 +9,7 @@ pub struct Dict(pub Mutex<Option<Connection>>);
 
 pub const NO_DICT: &str = "no-dict";
 
-const SCHEMA: &str = "
+pub const SCHEMA: &str = "
 PRAGMA journal_mode = WAL;
 CREATE TABLE IF NOT EXISTS settings(
   key TEXT PRIMARY KEY,
@@ -67,6 +67,57 @@ CREATE TABLE IF NOT EXISTS review_log(
   at INTEGER NOT NULL,
   quality INTEGER NOT NULL,
   quiz TEXT
+);
+-- 遊戲模式（寵物養成，game.rs）：預設關閉，關閉時不寫入
+CREATE TABLE IF NOT EXISTS pets(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  species TEXT NOT NULL,
+  name TEXT NOT NULL,
+  level INTEGER NOT NULL DEFAULT 1,
+  xp INTEGER NOT NULL DEFAULT 0,
+  branch TEXT,
+  shiny INTEGER NOT NULL DEFAULT 0,
+  active INTEGER NOT NULL DEFAULT 0,
+  accessories TEXT NOT NULL DEFAULT '[]',
+  hatched_at INTEGER NOT NULL,
+  teen_at INTEGER
+);
+CREATE TABLE IF NOT EXISTS eggs(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  species TEXT NOT NULL,
+  warmth INTEGER NOT NULL DEFAULT 0,
+  incubating INTEGER NOT NULL DEFAULT 0,
+  obtained_at INTEGER NOT NULL,
+  source TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS coin_log(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at INTEGER NOT NULL,
+  amount INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  ref TEXT
+);
+CREATE TABLE IF NOT EXISTS pet_xp_log(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pet_id INTEGER NOT NULL,
+  at INTEGER NOT NULL,
+  amount INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  review_id INTEGER
+);
+CREATE TABLE IF NOT EXISTS inventory(
+  item TEXT PRIMARY KEY,
+  qty INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS game_daily(
+  day INTEGER PRIMARY KEY,
+  due_reviews INTEGER NOT NULL DEFAULT 0,
+  practice INTEGER NOT NULL DEFAULT 0,
+  practice_xp INTEGER NOT NULL DEFAULT 0,
+  collect_coins INTEGER NOT NULL DEFAULT 0,
+  all_due_done INTEGER NOT NULL DEFAULT 0,
+  freeze_used INTEGER NOT NULL DEFAULT 0,
+  snack INTEGER NOT NULL DEFAULT 0
 );
 ";
 

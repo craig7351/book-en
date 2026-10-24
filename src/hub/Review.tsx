@@ -3,6 +3,8 @@ import { api, errorText } from '../shared/api'
 import { speak } from '../shared/speak'
 import { lemmaCandidates, normWord, tokenize } from '../shared/tokenize'
 import type { Item } from '../shared/types'
+import { game, MAX_LEVEL, playSfx, type GameState, type Reward } from '../shared/game'
+import { Celebrate, Companion } from './Companion'
 import { SourceLink } from './Vocab'
 
 // 題型：
@@ -94,7 +96,7 @@ function KindPicker({ kinds, onToggle }: { kinds: Kind[]; onToggle: (k: Kind) =>
   )
 }
 
-export function Review({ onChanged }: { onChanged: () => void }) {
+export function Review({ onChanged, gs }: { onChanged: () => void; gs: GameState | null }) {
   const [queue, setQueue] = useState<Item[] | null>(null)
   const [practice, setPractice] = useState(false)
   const [quiz, setQuiz] = useState<Quiz | null>(null)
@@ -105,6 +107,29 @@ export function Review({ onChanged }: { onChanged: () => void }) {
   // 連點時以最新的勾選計算，並丟掉過期的換題結果
   const kindsRef = useRef<Kind[]>(ALL_KINDS)
   const [err, setErr] = useState<string | null>(null)
+  // 遊戲模式：寵物的反應、這題的獎勵、本輪累計、升級／孵化慶祝
+  const [reaction, setReaction] = useState<{ ok: boolean; n: number } | null>(null)
+  const [reward, setReward] = useState<{ r: Reward; n: number } | null>(null)
+  const [session, setSession] = useState({ xp: 0, coins: 0 })
+  const [party, setParty] = useState<Reward | null>(null)
+  const sound = !!gs?.options.sound
+
+  function onResult(ok: boolean) {
+    setReaction((p) => ({ ok, n: (p?.n ?? 0) + 1 }))
+    playSfx(ok ? 'correct' : 'wrong', sound)
+  }
+
+  function gotReward(r: Reward | null) {
+    if (!r) return
+    setReward((p) => ({ r, n: (p?.n ?? 0) + 1 }))
+    setSession((s) => ({ xp: s.xp + r.xp, coins: s.coins + r.coins }))
+    // 跳出慶祝只留給大事（孵化、進化、滿級）；一般升級在陪伴列顯示一行就好
+    if (r.hatched || r.evolved || (r.levelUp ?? 0) >= MAX_LEVEL) {
+      setParty(r)
+      playSfx(r.hatched ? 'hatch' : 'level', sound)
+    } else if (r.levelUp) playSfx('level', sound)
+    else if (r.coins > 0) playSfx('coin', sound)
+  }
 
   async function start(mode: 'due' | 'practice', useKinds = kinds) {
     setErr(null)
@@ -114,6 +139,7 @@ export function Review({ onChanged }: { onChanged: () => void }) {
       const first = await firstQuiz(items, useKinds)
       setPractice(mode === 'practice')
       setScore({ right: 0, total: 0 })
+      setSession({ xp: 0, coins: 0 })
       setParked(first.skipped)
       setQueue(first.queue)
       setQuiz(first.quiz)
@@ -155,8 +181,13 @@ export function Review({ onChanged }: { onChanged: () => void }) {
 
   async function finish(quality: number) {
     if (!quiz || !queue) return
+    if (quiz.kind === 'recall') onResult(quality >= 3) // 句子題是自評，沒有 check 的時機
     if (!practice) {
-      await api.reviewGrade(quiz.item.id, quality, quiz.kind)
+      const res = await api.reviewGrade(quiz.item.id, quality, quiz.kind)
+      gotReward(res.reward)
+      onChanged()
+    } else if (gs) {
+      gotReward(await game.practice(quality >= 3).catch(() => null))
       onChanged()
     }
     setScore((s) => ({ right: s.right + (quality >= 3 ? 1 : 0), total: s.total + 1 }))
@@ -173,6 +204,11 @@ export function Review({ onChanged }: { onChanged: () => void }) {
     parked.length > 0 ? (
       <p className="muted small">有 {parked.length} 個項目不適用目前選的題型，先略過（排程不變，改題型就會出現）。</p>
     ) : null
+
+  const companion = gs && (
+    <Companion gs={gs} reaction={reaction} reward={reward} />
+  )
+  const celebrate = party && gs && <Celebrate reward={party} gs={gs} onClose={() => setParty(null)} />
 
   if (err) return <p className="msg error">{err}</p>
   if (!queue) return <p className="empty">載入中…</p>
@@ -191,6 +227,14 @@ export function Review({ onChanged }: { onChanged: () => void }) {
           <h2>目前沒有要複習的項目</h2>
         )}
         {skippedNote}
+        {gs && score.total > 0 && (
+          <p className="session-reward">
+            {gs.pet ? `${gs.pet.name} ` : ''}這一輪獲得 <b>{session.xp}</b> 經驗、<b>{session.coins}</b> 金幣
+            {gs.pet && gs.pet.need > 0 && `，再 ${gs.pet.need - gs.pet.xp} 經驗升級`}
+          </p>
+        )}
+        {companion}
+        {celebrate}
         <p className="muted">間隔重複會在你快忘記的時候再安排複習。</p>
         <KindPicker kinds={kinds} onToggle={toggleKind} />
         <div className="row-btns">
@@ -212,12 +256,22 @@ export function Review({ onChanged }: { onChanged: () => void }) {
       </div>
       <KindPicker kinds={kinds} onToggle={toggleKind} />
       {skippedNote}
-      <QuizView key={`${quiz.item.id}-${score.total}`} quiz={quiz} onDone={finish} />
+      {companion}
+      {celebrate}
+      <QuizView key={`${quiz.item.id}-${score.total}`} quiz={quiz} onDone={finish} onResult={onResult} />
     </section>
   )
 }
 
-function QuizView({ quiz, onDone }: { quiz: Quiz; onDone: (quality: number) => void }) {
+function QuizView({
+  quiz,
+  onDone,
+  onResult,
+}: {
+  quiz: Quiz
+  onDone: (quality: number) => void
+  onResult: (ok: boolean) => void
+}) {
   const [answer, setAnswer] = useState('')
   const [result, setResult] = useState<null | boolean>(null)
   const [revealed, setRevealed] = useState(false)
@@ -235,6 +289,7 @@ function QuizView({ quiz, onDone }: { quiz: Quiz; onDone: (quality: number) => v
     const ok = quiz.kind === 'cloze' ? g === normWord(quiz.form) || g === item.text : g === item.text
     setAnswer(given)
     setResult(ok)
+    onResult(ok)
   }
 
   // 作答後：Enter 下一題

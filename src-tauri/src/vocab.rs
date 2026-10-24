@@ -1,5 +1,6 @@
 // 收藏（單字 / 句子）與間隔重複複習（SM-2）。
 use crate::db::{err, now_ms, Db, Dict};
+use crate::game;
 use rusqlite::{params, OptionalExtension, Row};
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -71,20 +72,23 @@ pub struct ItemInput {
 
 // 收藏；已存在就回傳原本那筆（不重複、不重置複習進度）
 #[tauri::command]
-pub fn item_add(db: State<'_, Db>, item: ItemInput) -> Result<Item, String> {
+pub fn item_add(db: State<'_, Db>, item: ItemInput, day_start: Option<i64>) -> Result<Item, String> {
     let text = item.text.trim().to_string();
     if text.is_empty() || !(item.kind == "word" || item.kind == "sentence") {
         return Err("invalid-item".into());
     }
     let conn = db.0.lock().map_err(err)?;
     let now = now_ms();
-    conn.execute(
+    let inserted = conn.execute(
         "INSERT OR IGNORE INTO items(kind, text, phonetic, meaning_zh, context, context_zh, video_id, video_title, t, created_at, due_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?10)",
         params![item.kind, text, item.phonetic, item.meaning_zh, item.context, item.context_zh,
                 item.video_id, item.video_title, item.t, now],
     )
     .map_err(err)?;
+    if inserted > 0 && item.kind == "word" {
+        game::on_collect(&conn, game::sane_day(day_start, now), now).map_err(err)?;
+    }
     let id: i64 = conn
         .query_row("SELECT id FROM items WHERE kind = ?1 AND text = ?2", params![item.kind, text], |r| r.get(0))
         .map_err(err)?;
@@ -151,11 +155,25 @@ pub fn schedule(item: &mut Item, quality: i64, now: i64) {
     item.ease = (item.ease + 0.1 - (5.0 - q) * (0.08 + (5.0 - q) * 0.02)).max(1.3);
 }
 
+#[derive(Serialize)]
+pub struct GradeResult {
+    pub item: Item,
+    /// 遊戲模式開啟時這題得到的獎勵
+    pub reward: Option<game::Reward>,
+}
+
 #[tauri::command]
-pub fn review_grade(db: State<'_, Db>, id: i64, quality: i64, quiz: String) -> Result<Item, String> {
+pub fn review_grade(
+    db: State<'_, Db>,
+    id: i64,
+    quality: i64,
+    quiz: String,
+    day_start: Option<i64>,
+) -> Result<GradeResult, String> {
     let conn = db.0.lock().map_err(err)?;
     let mut item = get_item(&conn, id).map_err(err)?;
     let now = now_ms();
+    let was_due = item.due_at <= now;
     schedule(&mut item, quality, now);
     conn.execute(
         "UPDATE items SET due_at = ?2, interval_days = ?3, ease = ?4, reps = ?5, lapses = ?6 WHERE id = ?1",
@@ -167,7 +185,10 @@ pub fn review_grade(db: State<'_, Db>, id: i64, quality: i64, quiz: String) -> R
         params![id, now, quality, quiz],
     )
     .map_err(err)?;
-    Ok(item)
+    let review_id = conn.last_insert_rowid();
+    let reward =
+        game::on_review(&conn, review_id, quality, was_due, game::sane_day(day_start, now), now).map_err(err)?;
+    Ok(GradeResult { item, reward })
 }
 
 #[derive(Serialize)]

@@ -1,5 +1,6 @@
 // 型別化的 Rust 指令呼叫
 import { invoke } from './tauri'
+import type { Reward } from './game'
 import type { WordInfo } from './levels'
 import type {
   Bookmark,
@@ -34,12 +35,13 @@ export const api = {
   dictLookup: (word: string) => invoke<LookupResult>('dict_lookup', { word }),
   dictOnline: (word: string) => invoke<OnlineInfo>('dict_online', { word }),
 
-  itemAdd: (item: ItemInput) => invoke<Item>('item_add', { item }),
+  itemAdd: (item: ItemInput) => invoke<Item>('item_add', { item, dayStart: startOfToday() }),
   itemDelete: (id: number) => invoke<void>('item_delete', { id }),
   itemList: (query = '') => invoke<Item[]>('item_list', { query }),
   savedWords: () => invoke<string[]>('saved_words'),
   reviewDue: (limit: number) => invoke<Item[]>('review_due', { limit }),
-  reviewGrade: (id: number, quality: number, quiz: string) => invoke<Item>('review_grade', { id, quality, quiz }),
+  reviewGrade: (id: number, quality: number, quiz: string) =>
+    invoke<{ item: Item; reward: Reward | null }>('review_grade', { id, quality, quiz, dayStart: startOfToday() }),
   stats: () => invoke<Stats>('stats', { dayStart: startOfToday() }),
   quizDistractors: (exclude: string, n: number) => invoke<string[]>('quiz_distractors', { exclude, n }),
   exportItems: (format: 'csv' | 'anki') => invoke<string>('export_items', { format }),

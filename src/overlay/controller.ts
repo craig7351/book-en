@@ -1,3 +1,4 @@
+import { game, playSfx } from '../shared/game'
 // 播放控制：載字幕、追蹤目前句、每句自動暫停 / 單句循環、快捷鍵、偏好設定。
 import { api } from '../shared/api'
 import type { WordInfo } from '../shared/levels'
@@ -221,6 +222,29 @@ async function loadPrefs(): Promise<void> {
   document.documentElement.classList.toggle('be-layer', store.get().prefs.layer)
 }
 
+// 遊戲模式的面板陪伴（遊戲模式和「YouTube 面板陪伴」都開啟才顯示）
+export async function refreshPet(): Promise<void> {
+  try {
+    const g = await game.state()
+    const show = g.options.enabled && g.options.companion
+    store.set({
+      pet: show
+        ? { pet: g.pet, egg: g.eggs.find((e) => e.incubating) ?? g.eggs[0] ?? null, mood: g.mood, sound: g.options.sound }
+        : null,
+    })
+  } catch {
+    store.set({ pet: null })
+  }
+}
+
+/** 收藏了東西：迷你寵物跳一下 */
+export function cheerPet(): void {
+  const p = store.get().pet
+  if (!p) return
+  store.set((s) => ({ petCheer: s.petCheer + 1 }))
+  playSfx('coin', p.sound)
+}
+
 export async function refreshSaved(): Promise<void> {
   try {
     const [words, stats] = await Promise.all([api.savedWords(), api.stats()])
@@ -257,6 +281,7 @@ function onKey(e: KeyboardEvent): void {
 export function startController(): void {
   void loadPrefs()
   void refreshSaved()
+  void refreshPet()
   api
     .dictStatus()
     .then((d) => store.set({ dictMissing: !d.installed }))
@@ -266,6 +291,7 @@ export function startController(): void {
   window.addEventListener('focus', () => {
     void loadPrefs()
     void refreshSaved()
+    void refreshPet()
   })
   onVideoChange(onVideo)
   window.addEventListener('keydown', onKey, true)

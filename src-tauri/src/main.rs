@@ -6,6 +6,7 @@ mod db;
 mod dict;
 mod dictfile;
 mod examples;
+mod game;
 mod levels;
 mod subtitles;
 mod translate;
@@ -110,9 +111,26 @@ fn main() {
             dictfile::dict_download,
             examples::examples_for,
             examples::ai_examples,
+            game::game_state,
+            game::game_enable,
+            game::game_disable,
+            game::game_options,
+            game::pet_set_active,
+            game::pet_rename,
+            game::egg_incubate,
+            game::pet_equip,
+            game::shop_list,
+            game::shop_buy,
+            game::snack_use,
+            game::game_practice,
+            game::coin_history,
         ])
         .setup(|app| {
-            let data_dir = app.path().app_data_dir()?;
+            // BOOKEN_DATA_DIR：改用別的資料夾放使用者資料庫（測試時不碰真實資料）
+            let data_dir = match std::env::var_os("BOOKEN_DATA_DIR") {
+                Some(d) if !d.is_empty() => std::path::PathBuf::from(d),
+                _ => app.path().app_data_dir()?,
+            };
             std::fs::create_dir_all(&data_dir)?;
             let user_db = db::open_user_db(&data_dir.join("book-en.db"))?;
             // 使用者選過「不下載，繼續使用」就不再自動跳出字典畫面

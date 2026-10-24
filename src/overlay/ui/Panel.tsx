@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { api, errorText } from '../../shared/api'
 import { MODELS } from '../../shared/types'
-import { nextCue, prevCue, replayCue, refreshSaved, seekCue, setPrefs } from '../controller'
+import { cheerPet, nextCue, prevCue, replayCue, refreshSaved, seekCue, setPrefs } from '../controller'
 import type { Cue } from '../cues'
 import { cuesOf, store, useStore, type CaptionState, type Prefs } from '../store'
 import { selectZhSource, startTranslation } from '../translator'
 import { getVideoTitle } from '../youtube'
 import { Line } from './Line'
+import { PanelPet } from './PanelPet'
 import { WordCard } from './WordCard'
 import { WordsTab } from './WordsTab'
 
@@ -54,6 +55,7 @@ export function Panel() {
       {captions.status === 'ready' && <Controls />}
       {captions.status === 'ready' && <Tabs />}
       {captions.status === 'ready' && tab === 'words' ? <WordsTab /> : <Body state={captions} />}
+      <PanelPet />
       <WordCard />
     </aside>
   )
@@ -250,6 +252,7 @@ function SaveSentence({ cue, idx, saved }: { cue: Cue; idx: number; saved: boole
       })
       store.set((st) => ({ savedSentences: new Set(st.savedSentences).add(cue.text) }))
       void refreshSaved()
+      cheerPet()
     } catch (err) {
       store.set({ transError: errorText(err) })
     }

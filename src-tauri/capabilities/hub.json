@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "hub-local",
   "description": "學習中心（本地頁面）：單字庫、複習、設定",
-  "windows": ["hub"],
+  "windows": [
+    "hub"
+  ],
   "permissions": [
     "core:default",
     "allow-open-hub",
@@ -30,6 +32,19 @@
     "allow-dict-status",
     "allow-dict-download",
     "allow-examples-for",
-    "allow-ai-examples"
+    "allow-ai-examples",
+    "allow-game-state",
+    "allow-game-enable",
+    "allow-game-disable",
+    "allow-game-options",
+    "allow-pet-set-active",
+    "allow-pet-rename",
+    "allow-egg-incubate",
+    "allow-pet-equip",
+    "allow-shop-list",
+    "allow-shop-buy",
+    "allow-snack-use",
+    "allow-game-practice",
+    "allow-coin-history"
   ]
 }

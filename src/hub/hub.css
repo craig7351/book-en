@@ -799,3 +799,472 @@ code {
   padding: 1px 5px;
   border-radius: 4px;
 }
+
+/* 像素圖預覽（#sprites） */
+.sprite-preview .sp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 18px;
+}
+
+/* ---- 遊戲模式（寵物）---- */
+.pet-mini {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 2px 10px 2px 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.pet-mini:hover {
+  border-color: var(--accent);
+}
+
+.pet-mini + .stats {
+  margin-left: 0;
+}
+
+.pet-page .subtabs {
+  align-items: center;
+}
+
+.pet-wallet {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.pet-wallet b {
+  color: var(--fg);
+}
+
+.pet-home {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+  margin-top: 12px;
+}
+
+.scene {
+  position: relative;
+  width: 480px;
+  max-width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  line-height: 0;
+}
+
+.scene-bg {
+  width: 100%;
+  height: auto;
+}
+
+.scene-actor {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  transform: translateX(-50%);
+}
+
+.scene-actor img {
+  cursor: pointer;
+}
+
+.scene-egg {
+  position: absolute;
+  right: 6%;
+  bottom: 8%;
+}
+
+.pet-info {
+  flex: 1;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pet-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+}
+
+.pet-name form {
+  display: flex;
+  gap: 6px;
+  font-size: 15px;
+}
+
+.shiny-tag {
+  font-size: 12px;
+  color: #d4a017;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+.xp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.xp-bar {
+  flex: 1;
+  height: 10px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  min-width: 120px;
+}
+
+.xp-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #7bd88f, #3cc8a0);
+  transition: width 0.4s;
+}
+
+.xp-text {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.pet-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.pet-wear {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.pet-wear .label {
+  width: 100%;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.wear {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  padding: 2px 10px 2px 4px;
+}
+
+.wear.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pet-help {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pet-help summary {
+  cursor: pointer;
+}
+
+.pet-help ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.pet-list h3,
+.shop h3 {
+  font-size: 15px;
+  margin: 20px 0 10px;
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pcard,
+.shop-card {
+  width: 150px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.pcard.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.shop-icon {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-card .emoji {
+  font-size: 36px;
+}
+
+.shop-card .muted {
+  flex: 1;
+}
+
+.dex-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.dex-species {
+  width: 200px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.dex-forms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.dex-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 56px;
+}
+
+.coin-log {
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.coin-log td {
+  padding: 4px 16px 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.coin-log .plus {
+  color: var(--ok);
+  text-align: right;
+}
+
+.coin-log .minus {
+  color: var(--bad);
+  text-align: right;
+}
+
+.switch-row input {
+  width: 18px;
+  height: 18px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgb(0 0 0 / 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 24px 28px;
+  max-width: 640px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal h2 {
+  margin: 0;
+}
+
+.eggs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.egg-choice {
+  width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 12px;
+}
+
+.egg-choice img {
+  height: 99px;
+  object-fit: contain;
+}
+
+.celebrate p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.companion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px 14px 6px 8px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.companion-sprite {
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.companion-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reward-pop {
+  position: absolute;
+  left: 70px;
+  top: 4px;
+  display: flex;
+  gap: 8px;
+  font-weight: 700;
+  color: #16a34a;
+  pointer-events: none;
+  animation: float-up 1.6s ease-out forwards;
+}
+
+.reward-notes {
+  position: absolute;
+  right: 12px;
+  top: -14px;
+  background: #fff8db;
+  color: #8a5a00;
+  border: 1px solid #f3d27a;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-size: 13px;
+  animation: fade-out 5s ease-in forwards;
+}
+
+.session-reward {
+  font-size: 15px;
+}
+
+@keyframes float-up {
+  0% { opacity: 0; transform: translateY(8px); }
+  15% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-18px); }
+}
+
+@keyframes fade-out {
+  0%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 像素寵物的動作 */
+.px-idle {
+  animation: px-idle 1.4s steps(2) infinite;
+}
+
+.px-hop {
+  animation: px-hop 0.5s ease-out 2;
+}
+
+.px-tilt {
+  animation: px-tilt 0.8s ease-in-out;
+}
+
+.px-wobble {
+  animation: px-wobble 2.4s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+@keyframes px-idle {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+@keyframes px-hop {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  30% { transform: translateY(-14px) scale(0.95, 1.05); }
+  60% { transform: translateY(0) scale(1.06, 0.94); }
+}
+
+@keyframes px-tilt {
+  0%, 100% { transform: rotate(0); }
+  40% { transform: rotate(-10deg); }
+  70% { transform: rotate(4deg); }
+}
+
+@keyframes px-wobble {
+  0%, 70%, 100% { transform: rotate(0); }
+  76% { transform: rotate(-8deg); }
+  82% { transform: rotate(7deg); }
+  88% { transform: rotate(-4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .px-idle,
+  .px-hop,
+  .px-tilt,
+  .px-wobble,
+  .reward-pop {
+    animation: none;
+  }
+}
