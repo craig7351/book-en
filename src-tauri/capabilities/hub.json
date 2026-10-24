@@ -49,6 +49,8 @@
     "allow-tts-speak",
     "allow-tts-status",
     "allow-tts-download",
-    "allow-tts-remove"
+    "allow-tts-remove",
+    "allow-item-delete-many",
+    "allow-item-suspend"
   ]
 }

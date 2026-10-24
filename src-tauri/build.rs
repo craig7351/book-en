@@ -18,6 +18,8 @@ fn main() {
             "saved_words",
             "review_due",
             "review_grade",
+            "item_delete_many",
+            "item_suspend",
             "stats",
             "quiz_distractors",
             "export_items",

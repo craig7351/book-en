@@ -242,3 +242,12 @@ Haiku 翻 3 句約 3.6 秒；回覆在 JSON 的 `result` 欄位。
 - 試聽樣本：`src/hub/public/voice-samples/*.ogg`（10 個聲音各一句，Opus 32 kbps，共約 200 KB），用 fp16 模型產生後 ffmpeg 轉檔。
 - 下載位置跟著使用者資料夾（`db::DataDir`，`BOOKEN_DATA_DIR` 可改）：`<資料夾>\kokoro\`，快取在 `kokoro\cache\`。
 - 真模型的整合測試：`KOKORO_TEST_DIR=<含模型的資料夾> cargo test --release real_model -- --ignored --nocapture`。
+
+## 單字庫變大之後（2026-10-25）
+
+- **每天新字上限**（prefs.newPerDay，預設 20，0 = 不限）：「新字」= 還沒有 review_log 的項目。`vocab::due_counts` 統一計算
+  「複習過且到期」＋「今天額度內的新字」，`review_due`、`stats.due`（各處的待複習數）、遊戲的「今天到期全部完成」都用它。
+  今天出過的新字 = 第一筆 review_log 在今天的項目。
+- **暫停複習**：items.suspended（`db::migrate` 補欄位），不出題、不算待複習。指令 `item_suspend`、`item_delete_many`。
+- 單字庫頁：狀態分類（待複習／新字／學習中／常答錯 ≥2 次／已熟練 間隔 ≥21 天／已暫停）、依影片、排序、一次 60 張「顯示更多」、勾選批次（暫停、恢復、標成已知＝word_status known＋移出單字庫、刪除）。
+  分類在畫面端算（全部項目一次載入；幾千個也只是幾百 KB 的 JSON，畫卡片才是瓶頸 → 分頁）。

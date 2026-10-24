@@ -27,10 +27,11 @@ pub struct Item {
     pub reps: i64,
     pub lapses: i64,
     pub audio_urls: Vec<String>,
+    pub suspended: bool,
 }
 
 const COLS: &str = "id, kind, text, phonetic, meaning_zh, context, context_zh, video_id, video_title, t, \
-                    created_at, due_at, interval_days, ease, reps, lapses, audio_urls";
+                    created_at, due_at, interval_days, ease, reps, lapses, audio_urls, suspended";
 
 fn row_item(r: &Row) -> rusqlite::Result<Item> {
     Ok(Item {
@@ -54,6 +55,7 @@ fn row_item(r: &Row) -> rusqlite::Result<Item> {
             .get::<_, Option<String>>(16)?
             .and_then(|j| serde_json::from_str(&j).ok())
             .unwrap_or_default(),
+        suspended: r.get::<_, i64>(17)? != 0,
     })
 }
 
@@ -140,14 +142,99 @@ pub fn saved_words(db: State<'_, Db>) -> Result<Vec<String>, String> {
     rows.collect::<Result<_, _>>().map_err(err)
 }
 
+// ---- 每天新字上限 ----
+// 「新字」= 收藏後還沒複習過的項目。新收藏的會立刻到期，一次收太多會被複習淹沒 → 每天只出 N 個新字（設定 prefs.newPerDay，0 = 不限）
+
+const IS_NEW: &str = "NOT EXISTS (SELECT 1 FROM review_log r WHERE r.item_id = items.id)";
+pub const DEFAULT_NEW_PER_DAY: i64 = 20;
+
+pub fn new_per_day(conn: &rusqlite::Connection) -> i64 {
+    conn.query_row("SELECT value FROM settings WHERE key = 'prefs'", [], |r| r.get::<_, String>(0))
+        .ok()
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+        .and_then(|v| v["newPerDay"].as_i64())
+        .unwrap_or(DEFAULT_NEW_PER_DAY)
+}
+
+/// 今天還能出幾個新字（今天第一次複習的項目算「今天出過的新字」）
+fn new_allowance(conn: &rusqlite::Connection, day: i64) -> rusqlite::Result<i64> {
+    let limit = new_per_day(conn);
+    if limit <= 0 {
+        return Ok(i64::MAX / 2);
+    }
+    let introduced: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM (SELECT MIN(at) AS first FROM review_log GROUP BY item_id) WHERE first >= ?1",
+        [day],
+        |r| r.get(0),
+    )?;
+    Ok((limit - introduced).max(0))
+}
+
+pub struct DueCounts {
+    pub reviews: i64, // 複習過、到期的
+    pub new_today: i64, // 今天會出的新字
+    pub new_waiting: i64, // 超過今天上限、之後再出的新字
+}
+
+pub fn due_counts(conn: &rusqlite::Connection, day: i64, now: i64) -> rusqlite::Result<DueCounts> {
+    let reviews: i64 = conn.query_row(
+        &format!("SELECT COUNT(*) FROM items WHERE suspended = 0 AND due_at <= ?1 AND NOT {IS_NEW}"),
+        [now],
+        |r| r.get(0),
+    )?;
+    let new_total: i64 =
+        conn.query_row(&format!("SELECT COUNT(*) FROM items WHERE suspended = 0 AND {IS_NEW}"), [], |r| r.get(0))?;
+    let new_today = new_total.min(new_allowance(conn, day)?);
+    Ok(DueCounts { reviews, new_today, new_waiting: new_total - new_today })
+}
+
+/// 待複習：先出複習過、到期的（最早到期的先），再出今天額度內的新字（最早收藏的先）
 #[tauri::command]
-pub fn review_due(db: State<'_, Db>, limit: i64) -> Result<Vec<Item>, String> {
+pub fn review_due(db: State<'_, Db>, limit: i64, day_start: Option<i64>) -> Result<Vec<Item>, String> {
     let conn = db.0.lock().map_err(err)?;
-    let mut stmt = conn
-        .prepare(&format!("SELECT {COLS} FROM items WHERE due_at <= ?1 ORDER BY due_at LIMIT ?2"))
-        .map_err(err)?;
-    let rows = stmt.query_map(params![now_ms(), limit], row_item).map_err(err)?;
-    rows.collect::<Result<_, _>>().map_err(err)
+    let now = now_ms();
+    let day = crate::game::sane_day(day_start, now);
+    let query = |sql: &str, p: &[&dyn rusqlite::ToSql]| -> Result<Vec<Item>, String> {
+        let mut stmt = conn.prepare(sql).map_err(err)?;
+        let rows = stmt.query_map(p, row_item).map_err(err)?;
+        rows.collect::<Result<_, _>>().map_err(err)
+    };
+    let mut items = query(
+        &format!("SELECT {COLS} FROM items WHERE suspended = 0 AND due_at <= ?1 AND NOT {IS_NEW} ORDER BY due_at LIMIT ?2"),
+        &[&now, &limit],
+    )?;
+    let room = (limit - items.len() as i64).min(new_allowance(&conn, day).map_err(err)?);
+    if room > 0 {
+        items.extend(query(
+            &format!("SELECT {COLS} FROM items WHERE suspended = 0 AND {IS_NEW} ORDER BY created_at LIMIT ?1"),
+            &[&room],
+        )?);
+    }
+    Ok(items)
+}
+
+/// 批次刪除（含複習紀錄）
+#[tauri::command]
+pub fn item_delete_many(db: State<'_, Db>, ids: Vec<i64>) -> Result<usize, String> {
+    let mut conn = db.0.lock().map_err(err)?;
+    let tx = conn.transaction().map_err(err)?;
+    for id in &ids {
+        tx.execute("DELETE FROM review_log WHERE item_id = ?1", [id]).map_err(err)?;
+        tx.execute("DELETE FROM items WHERE id = ?1", [id]).map_err(err)?;
+    }
+    tx.commit().map_err(err)?;
+    Ok(ids.len())
+}
+
+/// 暫停 / 恢復複習
+#[tauri::command]
+pub fn item_suspend(db: State<'_, Db>, ids: Vec<i64>, on: bool) -> Result<(), String> {
+    let mut conn = db.0.lock().map_err(err)?;
+    let tx = conn.transaction().map_err(err)?;
+    for id in &ids {
+        tx.execute("UPDATE items SET suspended = ?2 WHERE id = ?1", params![id, on as i64]).map_err(err)?;
+    }
+    tx.commit().map_err(err)
 }
 
 // SM-2：quality 0–5（< 3 視為忘記）。忘記的字 10 分鐘後再出現。
@@ -212,6 +299,7 @@ pub struct Stats {
     pub words: i64,
     pub sentences: i64,
     pub due: i64,
+    pub new_waiting: i64, // 超過今天新字上限、之後再出的
     pub reviewed_today: i64,
     pub streak_days: i64,
 }
@@ -224,7 +312,8 @@ pub fn stats(db: State<'_, Db>, day_start: i64) -> Result<Stats, String> {
     };
     let words = count("SELECT COUNT(*) FROM items WHERE kind = 'word'", &[])?;
     let sentences = count("SELECT COUNT(*) FROM items WHERE kind = 'sentence'", &[])?;
-    let due = count("SELECT COUNT(*) FROM items WHERE due_at <= ?1", &[&now_ms()])?;
+    let dc = due_counts(&conn, day_start, now_ms()).map_err(err)?;
+    let (due, new_waiting) = (dc.reviews + dc.new_today, dc.new_waiting);
     let reviewed_today = count("SELECT COUNT(*) FROM review_log WHERE at >= ?1", &[&day_start])?;
     // 連續學習天數：從今天（day_start = 使用者當地今天 0 點）往回數每天都有複習紀錄的天數；
     // 今天還沒複習不算中斷，從昨天開始數
@@ -238,7 +327,7 @@ pub fn stats(db: State<'_, Db>, day_start: i64) -> Result<Stats, String> {
         streak_days += 1;
         start -= day;
     }
-    Ok(Stats { words, sentences, due, reviewed_today, streak_days })
+    Ok(Stats { words, sentences, due, new_waiting, reviewed_today, streak_days })
 }
 
 // 選擇題誘答：優先用自己收藏的其他單字，不夠再從字典常用字補
@@ -322,4 +411,54 @@ pub fn set_setting(db: State<'_, Db>, key: String, value: String) -> Result<(), 
     conn.execute("INSERT OR REPLACE INTO settings(key, value) VALUES (?1, ?2)", params![key, value])
         .map_err(err)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod due_tests {
+    use super::*;
+
+    fn db(new_per_day: i64) -> rusqlite::Connection {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch(crate::db::SCHEMA).unwrap();
+        crate::db::migrate(&conn).unwrap();
+        conn.execute(
+            "INSERT INTO settings(key, value) VALUES ('prefs', ?1)",
+            [format!("{{\"newPerDay\":{new_per_day}}}")],
+        )
+        .unwrap();
+        for i in 0..30 {
+            conn.execute(
+                "INSERT INTO items(kind, text, created_at, due_at) VALUES ('word', ?1, ?2, ?2)",
+                params![format!("w{i}"), i],
+            )
+            .unwrap();
+        }
+        conn
+    }
+
+    #[test]
+    fn new_per_day_limit() {
+        let conn = db(10);
+        let (day, now) = (1_000, 2_000);
+        let d = due_counts(&conn, day, now).unwrap();
+        assert_eq!((d.reviews, d.new_today, d.new_waiting), (0, 10, 20));
+        // 今天複習了 3 個新字 → 剩 7 個額度；那 3 個排到明天（答對）
+        for id in 1..=3 {
+            conn.execute("INSERT INTO review_log(item_id, at, quality) VALUES (?1, 1500, 4)", [id]).unwrap();
+            conn.execute("UPDATE items SET due_at = 999999 WHERE id = ?1", [id]).unwrap();
+        }
+        let d = due_counts(&conn, day, now).unwrap();
+        assert_eq!((d.reviews, d.new_today, d.new_waiting), (0, 7, 20));
+        // 暫停的不算
+        conn.execute("UPDATE items SET suspended = 1 WHERE id > 20", []).unwrap();
+        let d = due_counts(&conn, day, now).unwrap();
+        assert_eq!((d.new_today, d.new_waiting), (7, 10));
+    }
+
+    #[test]
+    fn unlimited_when_zero() {
+        let conn = db(0);
+        let d = due_counts(&conn, 0, 100).unwrap();
+        assert_eq!((d.new_today, d.new_waiting), (30, 0));
+    }
 }

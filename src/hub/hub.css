@@ -202,9 +202,102 @@ main {
 }
 
 .item-head {
+  padding-right: 20px; /* 右上角的選取框 */
   display: flex;
   align-items: baseline;
   gap: 8px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: -4px 0 14px;
+}
+
+.chip {
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.chip b {
+  color: var(--fg);
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+.chip.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.video-filter {
+  margin-left: auto;
+  max-width: 320px;
+  font-size: 13px;
+}
+
+.batch {
+  position: sticky;
+  top: 70px;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
+}
+
+.item {
+  position: relative;
+}
+
+.item .pick {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.35;
+  cursor: pointer;
+}
+
+.item:hover .pick,
+.item .pick:checked {
+  opacity: 1;
+}
+
+.item.picked {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.item.suspended {
+  opacity: 0.6;
+}
+
+.item-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.center {
+  text-align: center;
 }
 
 .say {

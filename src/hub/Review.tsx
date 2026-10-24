@@ -107,6 +107,7 @@ export function Review({ onChanged, gs }: { onChanged: () => void; gs: GameState
   // 連點時以最新的勾選計算，並丟掉過期的換題結果
   const kindsRef = useRef<Kind[]>(ALL_KINDS)
   const [err, setErr] = useState<string | null>(null)
+  const [newWaiting, setNewWaiting] = useState(0) // 超過每天新字上限、之後再出的
   // 遊戲模式：寵物的反應、這題的獎勵、本輪累計、升級／孵化慶祝
   const [reaction, setReaction] = useState<{ ok: boolean; n: number } | null>(null)
   const [reward, setReward] = useState<{ r: Reward; n: number } | null>(null)
@@ -137,6 +138,7 @@ export function Review({ onChanged, gs }: { onChanged: () => void; gs: GameState
       const items =
         mode === 'due' ? await api.reviewDue(30) : shuffle(await api.itemList()).slice(0, 10)
       const first = await firstQuiz(items, useKinds)
+      api.stats().then((s) => setNewWaiting(s.newWaiting)).catch(() => {})
       setPractice(mode === 'practice')
       setScore({ right: 0, total: 0 })
       setSession({ xp: 0, coins: 0 })
@@ -227,6 +229,9 @@ export function Review({ onChanged, gs }: { onChanged: () => void; gs: GameState
           <h2>目前沒有要複習的項目</h2>
         )}
         {skippedNote}
+        {newWaiting > 0 && !practice && (
+          <p className="muted small">還有 {newWaiting} 個新字，依「每天新字上限」之後幾天再出（設定 → 複習）。</p>
+        )}
         {gs && score.total > 0 && (
           <p className="session-reward">
             {gs.pet ? `${gs.pet.name} ` : ''}這一輪獲得 <b>{session.xp}</b> 經驗、<b>{session.coins}</b> 金幣

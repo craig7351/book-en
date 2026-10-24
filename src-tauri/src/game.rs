@@ -579,7 +579,9 @@ pub fn on_review(
             reward.coins += 2;
             warm_egg(conn, now, &mut reward)?;
         }
-        let left: i64 = conn.query_row("SELECT COUNT(*) FROM items WHERE due_at <= ?1", [now], |r| r.get(0))?;
+        // 「今天到期的」照每天新字上限算（超過上限、明天才出的新字不算）
+        let dc = crate::vocab::due_counts(conn, day, now)?;
+        let left = dc.reviews + dc.new_today;
         if left == 0 && !today.all_due_done {
             set_flag(conn, day, "all_due_done")?;
             give_pet_xp(conn, 30, "all_due", None, now, &mut reward)?;

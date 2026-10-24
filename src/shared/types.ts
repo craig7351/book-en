@@ -55,12 +55,14 @@ export interface Item {
   reps: number
   lapses: number
   audioUrls: string[]
+  suspended: boolean // 暫停複習
 }
 
 export interface Stats {
   words: number
   sentences: number
-  due: number
+  due: number // 今天要複習的（複習過、到期的＋今天新字額度內的新字）
+  newWaiting: number // 超過每天新字上限、之後再出的新字
   reviewedToday: number
   streakDays: number
 }

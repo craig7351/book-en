@@ -131,6 +131,22 @@ function General({ gs, onGameChange }: { gs: GameState | null; onGameChange: () 
 
       <VoiceSection prefs={prefs} update={update} />
 
+      <h2>複習</h2>
+      <label className="row">
+        <span>每天新字上限</span>
+        <select
+          value={(prefs.newPerDay as number) ?? 20}
+          onChange={(e) => update({ newPerDay: Number(e.target.value) })}
+        >
+          {[5, 10, 15, 20, 30, 50, 100, 0].map((n) => (
+            <option key={n} value={n}>
+              {n ? `${n} 個` : '不限'}
+            </option>
+          ))}
+        </select>
+        <span className="muted small">新收藏的字每天最多出這麼多個，其他的之後幾天再出，避免一次收太多被複習淹沒</span>
+      </label>
+
       <GameSection gs={gs} onChange={onGameChange} />
 
       <h2>快捷鍵（YouTube 影片頁）</h2>

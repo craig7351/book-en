@@ -40,7 +40,9 @@ export const api = {
   itemDelete: (id: number) => invoke<void>('item_delete', { id }),
   itemList: (query = '') => invoke<Item[]>('item_list', { query }),
   savedWords: () => invoke<string[]>('saved_words'),
-  reviewDue: (limit: number) => invoke<Item[]>('review_due', { limit }),
+  reviewDue: (limit: number) => invoke<Item[]>('review_due', { limit, dayStart: startOfToday() }),
+  itemDeleteMany: (ids: number[]) => invoke<number>('item_delete_many', { ids }),
+  itemSuspend: (ids: number[], on: boolean) => invoke<void>('item_suspend', { ids, on }),
   reviewGrade: (id: number, quality: number, quiz: string) =>
     invoke<{ item: Item; reward: Reward | null }>('review_grade', { id, quality, quiz, dayStart: startOfToday() }),
   stats: () => invoke<Stats>('stats', { dayStart: startOfToday() }),

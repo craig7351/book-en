@@ -137,6 +137,10 @@ pub fn migrate(conn: &Connection) -> rusqlite::Result<()> {
         // 單字的真人錄音網址（JSON 陣列），收藏時從線上字典帶過來
         conn.execute_batch("ALTER TABLE items ADD COLUMN audio_urls TEXT")?;
     }
+    if !column_exists(conn, "items", "suspended") {
+        // 暫停複習（不出題、不算待複習，資料保留）
+        conn.execute_batch("ALTER TABLE items ADD COLUMN suspended INTEGER NOT NULL DEFAULT 0")?;
+    }
     Ok(())
 }
 
