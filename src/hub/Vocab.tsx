@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, errorText } from '../shared/api'
-import { speakItem } from '../shared/speak'
+import { speakItem, speakSentence } from '../shared/speak'
 import type { Item, ItemKind } from '../shared/types'
 
 export const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -82,6 +82,9 @@ export function Vocab({ onChanged }: { onChanged: () => void }) {
         {shown.map((item) => (
           <article key={item.id} className={'item ' + item.kind}>
             <div className="item-head">
+              <button className="say" title={item.kind === 'word' ? '念這個字' : '念這句'} onClick={() => speakItem(item)}>
+                🔊
+              </button>
               <span className="item-text" onClick={() => speakItem(item)} title="發音">
                 {item.text}
               </span>
@@ -90,7 +93,12 @@ export function Vocab({ onChanged }: { onChanged: () => void }) {
             {item.kind === 'word' && item.meaningZh && <div className="meaning">{item.meaningZh}</div>}
             {item.context && item.kind === 'word' && (
               <div className="ctx">
-                <div>{item.context}</div>
+                <div>
+                  <button className="say small" title="念原句" onClick={() => speakSentence(item.context!)}>
+                    🔊
+                  </button>
+                  {item.context}
+                </div>
                 {item.contextZh && <div className="muted">{item.contextZh}</div>}
               </div>
             )}

@@ -207,6 +207,27 @@ main {
   gap: 8px;
 }
 
+.say {
+  border: none;
+  background: none;
+  padding: 0 2px;
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  align-self: center;
+  opacity: 0.75;
+}
+
+.say:hover {
+  opacity: 1;
+}
+
+.say.small {
+  font-size: 14px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
 .item-text {
   font-size: 20px;
   font-weight: 700;
