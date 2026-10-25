@@ -179,6 +179,38 @@ button.primary {
   font-size: 13px;
 }
 
+.webai.folded {
+  padding: 4px 10px;
+}
+
+.webai-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 2px 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.webai-head .caret {
+  width: 10px;
+  color: var(--muted);
+}
+
+.webai-head .grow {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.webai-head:hover .grow {
+  color: var(--accent);
+}
+
 .webai-step {
   display: flex;
   flex-wrap: wrap;

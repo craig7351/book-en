@@ -20,8 +20,17 @@ async function copyText(text: string): Promise<void> {
   }
 }
 
+// 收合狀態：這次開著 app 期間記住（換影片也沿用）
+let openPref: boolean | null = null
+
 export function WebAi() {
   const zh = useStore((s) => s.zh)
+  // 還沒翻任何一句時預設展開，已經有翻譯就預設收合
+  const [open, setOpenState] = useState(() => openPref ?? !store.get().zh.some((z) => typeof z === 'string'))
+  const setOpen = (v: boolean) => {
+    openPref = v
+    setOpenState(v)
+  }
   const [size, setSize] = useState(store.get().prefs.webAiChunk || DEFAULT_CHUNK)
   const [copied, setCopied] = useState<string | null>(null)
   const [reply, setReply] = useState('')
@@ -86,8 +95,20 @@ export function WebAi() {
     if (file.current) file.current.value = ''
   }
 
+  const progress = missing.length ? `已翻 ${done} / ${lines.length} 句` : `✓ 全部 ${lines.length} 句都翻好了`
+  const head = (
+    <button className="webai-head" onClick={() => setOpen(!open)} title={open ? '收合' : '展開'}>
+      <span className="caret">{open ? '▾' : '▸'}</span>
+      <b>網頁 AI 翻譯</b>
+      <span className={missing.length ? 'muted' : 'ok'}>{progress}</span>
+      <span className="muted grow">{open ? '收合' : '展開'}</span>
+    </button>
+  )
+  if (!open) return <div className="webai folded">{head}</div>
+
   return (
     <div className="webai">
+      {head}
       <div className="webai-step">
         <b>① 複製題目</b>
         <span className="muted">每段 {size} 句（學習中心 → 設定可調）</span>
@@ -135,9 +156,7 @@ export function WebAi() {
 
       <div className="webai-step">
         <b>③ 進度</b>
-        <span className={missing.length ? 'muted' : 'ok'}>
-          {missing.length ? `已翻 ${done} / ${lines.length} 句` : `✓ 全部 ${lines.length} 句都翻好了`}
-        </span>
+        <span className={missing.length ? 'muted' : 'ok'}>{progress}</span>
         {missing.length > 0 && done > 0 && (
           <button
             className={copied === 'miss' ? 'on' : ''}
