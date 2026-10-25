@@ -29,6 +29,9 @@ export const api = {
   translationCached: (lines: string[]) => invoke<(string | null)[]>('translation_cached', { lines }),
   saveSubtitles: (subs: SavedSubs) => invoke<string>('save_subtitles', { subs }),
   loadSubtitles: (videoId: string) => invoke<SavedSubs | null>('load_subtitles', { videoId }),
+  saveWebAiPrompt: (videoId: string, part: number, text: string) =>
+    invoke<string>('save_webai_prompt', { videoId, part, text }),
+  openAiSite: (url: string) => invoke<void>('open_ai_site', { url }),
   aiExplain: (word: string, sentence: string, model: string) =>
     invoke<string>('ai_explain', { word, sentence, model }),
   claudeStatus: () => invoke<string>('claude_status'),

@@ -8,6 +8,7 @@ import { selectZhSource, startTranslation } from '../translator'
 import { getVideoTitle } from '../youtube'
 import { Line } from './Line'
 import { PanelPet } from './PanelPet'
+import { WebAi } from './WebAi'
 import { WordCard } from './WordCard'
 import { WordsTab } from './WordsTab'
 
@@ -182,6 +183,7 @@ function ZhControls() {
           )}
         </>
       )}
+      {current?.kind === 'web' && <WebAi />}
       {zhStatus && <div className="muted small">{zhStatus}</div>}
       {transError && <div className="error small">{transError}</div>}
     </div>

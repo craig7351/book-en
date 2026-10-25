@@ -108,6 +108,8 @@ fn main() {
             bookmarks::bookmark_delete,
             subtitles::save_subtitles,
             subtitles::load_subtitles,
+            subtitles::save_webai_prompt,
+            subtitles::open_ai_site,
             levels::word_info,
             levels::set_word_status,
             levels::vocab_ranks,

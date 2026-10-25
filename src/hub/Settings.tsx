@@ -16,6 +16,7 @@ import {
   type Accent,
 } from '../shared/speak'
 import { MODELS, type DictStatus } from '../shared/types'
+import { CHUNK_OPTIONS, DEFAULT_CHUNK } from '../shared/webai'
 
 type SubTab = 'general' | 'credits'
 
@@ -91,6 +92,22 @@ function General({ gs, onGameChange }: { gs: GameState | null; onGameChange: () 
         <span>{claude}</span>
         <button onClick={checkClaude}>重新檢查</button>
       </div>
+      <label className="row">
+        <span>網頁 AI 每段句數</span>
+        <select
+          value={(prefs.webAiChunk as number) || DEFAULT_CHUNK}
+          onChange={(e) => update({ webAiChunk: Number(e.target.value) })}
+        >
+          {CHUNK_OPTIONS.map((n) => (
+            <option key={n} value={n}>
+              {n} 句
+            </option>
+          ))}
+        </select>
+        <span className="muted small">
+          中文來源選「網頁 AI 翻譯」時，題目每段幾句。免費版 AI 回覆太長會被截斷或漏句，就調小一點
+        </span>
+      </label>
 
       <h2>離線字典</h2>
       <div className="row">

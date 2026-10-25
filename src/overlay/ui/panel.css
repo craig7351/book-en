@@ -168,6 +168,61 @@ button.primary {
   color: var(--muted);
 }
 
+.webai {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.webai-step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.webai-btns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.webai button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.webai button.link {
+  border: none;
+  padding: 2px 4px;
+  color: var(--accent);
+}
+
+.webai button.link:hover {
+  text-decoration: underline;
+}
+
+.webai textarea {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  resize: vertical;
+}
+
+.webai .ok {
+  color: #16a34a;
+}
+
 .small {
   font-size: 12px;
   width: 100%;

@@ -30,6 +30,8 @@ fn main() {
             "bookmark_delete",
             "save_subtitles",
             "load_subtitles",
+            "save_webai_prompt",
+            "open_ai_site",
             "word_info",
             "set_word_status",
             "vocab_ranks",

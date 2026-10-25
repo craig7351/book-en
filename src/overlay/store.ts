@@ -4,6 +4,7 @@ import type { EggView, PetView } from '../shared/game'
 import { DEFAULT_LEVELS, type WordInfo } from '../shared/levels'
 import type { Mood } from '../shared/sprites'
 import type { Cue } from './cues'
+import { DEFAULT_CHUNK } from '../shared/webai'
 import type { CaptionResult, ZhKind } from './youtube'
 
 export interface Prefs {
@@ -19,6 +20,7 @@ export interface Prefs {
   knownMax: number // 詞頻分級：排名 ≤ 這個 = 基礎（自動已知）
   suggestMax: number // 排名 ≤ 這個 = 建議學習，更後面 = 罕見
   markLevels: boolean // 字幕上標示分級（建議學習加底線、罕見變淡）
+  webAiChunk: number // 網頁 AI 翻譯：每段幾句（在學習中心設定）
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -34,6 +36,7 @@ export const DEFAULT_PREFS: Prefs = {
   knownMax: DEFAULT_LEVELS.knownMax,
   suggestMax: DEFAULT_LEVELS.suggestMax,
   markLevels: true,
+  webAiChunk: DEFAULT_CHUNK,
 }
 
 export type CaptionState =

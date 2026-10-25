@@ -37,6 +37,8 @@
     "allow-ai-examples",
     "allow-game-state",
     "allow-tts-speak",
-    "allow-tts-status"
+    "allow-tts-status",
+    "allow-save-webai-prompt",
+    "allow-open-ai-site"
   ]
 }

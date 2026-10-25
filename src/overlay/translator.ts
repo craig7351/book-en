@@ -1,9 +1,10 @@
-// 中文來源：YouTube 中文字幕 / Google 自動翻譯（YouTube 內建）/ AI 翻譯（claude -p）。
+// 中文來源：YouTube 中文字幕 / Google 自動翻譯（YouTube 內建）/ AI 翻譯（claude -p）/ 網頁 AI（使用者複製貼上）。
 // YouTube 來源免費又快 → 選了就載入；AI 只先讀快取，按「開始 AI 翻譯」才呼叫 claude。
 import { api, errorText } from '../shared/api'
 import type { SavedSubs } from '../shared/types'
 import { alignTo, looksChinese } from './cues'
 import { cuesOf, store } from './store'
+import { parseReply, parseSrt, usable, type Line } from '../shared/webai'
 import { getVideoTitle, loadYoutubeZh, type ZhSource } from './youtube'
 
 const BATCH = 40
@@ -28,7 +29,7 @@ let saved: SavedSubs | null = null
 function savedLabel(s: SavedSubs): string {
   const d = s.savedAt ? new Date(s.savedAt) : null
   const date = d ? `${d.getMonth() + 1}/${d.getDate()}` : ''
-  return `已存的 AI 字幕（${s.model}${date ? '・' + date : ''}${s.complete ? '' : '・未完成'}）`
+  return `已存的 AI 字幕（${s.model === 'web' ? '網頁 AI' : s.model}${date ? '・' + date : ''}${s.complete ? '' : '・未完成'}）`
 }
 
 // 把存檔放進來源清單最前面（已有就更新標籤）
@@ -42,8 +43,8 @@ function upsertSavedSource(s: SavedSubs): void {
   })
 }
 
-// 目前的 AI 譯文寫成檔案（每翻完一批就寫，中途停掉也不會白翻）
-async function persistAi(): Promise<string | null> {
+// 目前的 AI 譯文寫成檔案（每翻完一批就寫，中途停掉也不會白翻）；model = 'web' 是網頁 AI 貼回來的
+async function persistAi(model = store.get().prefs.model): Promise<string | null> {
   const s = store.get()
   if (s.captions.status !== 'ready') return null
   const cues = s.captions.result.cues
@@ -52,7 +53,7 @@ async function persistAi(): Promise<string | null> {
   const subs: SavedSubs = {
     videoId: s.captions.videoId,
     title: getVideoTitle(),
-    model: s.prefs.model,
+    model,
     complete: lines.every((l) => l.zh),
     lines,
   }
@@ -63,6 +64,17 @@ async function persistAi(): Promise<string | null> {
   } catch {
     return null
   }
+}
+
+// 存檔的中文對回字幕：同一位置的英文一樣就直接用；對不上（字幕斷句規則改過）再依英文原句找。
+// 「(Laughter)」這種重複的句子只拿有翻譯的來對，免得被沒翻的那幾行蓋掉
+function fromSaved(file: SavedSubs, cues: { text: string }[]): (string | undefined)[] {
+  const byText = new Map<string, string>()
+  for (const l of file.lines) if (l.zh && !byText.has(l.en)) byText.set(l.en, l.zh)
+  return cues.map((c, i) => {
+    const same = file.lines[i]
+    return (same?.en === c.text ? same.zh : null) ?? byText.get(c.text) ?? undefined
+  })
 }
 
 // 換影片後挑預設來源：上次選的種類 → 有存檔就用 → YouTube 中文字幕 → Google 自動翻譯 → AI（只讀快取）
@@ -101,11 +113,14 @@ export async function selectZhSource(id: string, note: string | null = null): Pr
   store.set({ zhSource: id, zh: new Array(cues.length).fill(undefined), translating: false, transError: null, aiMissing: 0 })
 
   if (source.kind === 'ai') return loadAiCached(my, note)
+  if (source.kind === 'web') {
+    // 之前貼過的（存檔是網頁 AI 的）接著用，可以繼續補缺的句子
+    const web = saved?.model === 'web' ? saved : null
+    store.set({ zh: web ? fromSaved(web, cues) : cues.map(() => undefined), zhStatus: web?.path ? `存檔：${web.path}` : note })
+    return
+  }
   if (source.kind === 'saved') {
-    // 依英文原句對應（字幕斷句規則改過也對得上）
-    const map = new Map((saved?.lines ?? []).map((l) => [l.en, l.zh]))
-    const zh = cues.map((c) => map.get(c.text) ?? undefined)
-    store.set({ zh, zhStatus: saved?.path ? `存檔：${saved.path}` : null })
+    store.set({ zh: saved ? fromSaved(saved, cues) : [], zhStatus: saved?.path ? `存檔：${saved.path}` : null })
     return
   }
 
@@ -204,4 +219,37 @@ export async function startTranslation(): Promise<void> {
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, worker))
   if (my === runToken) store.set({ translating: false })
+}
+
+// ---- 網頁 AI（使用者把題目複製到 ChatGPT 等網頁，再把回覆貼回來）----
+
+export function webLines(): Line[] {
+  return cuesOf(store.get()).map((c, i) => ({ n: i + 1, en: c.text }))
+}
+
+/** 貼回來的回覆（或上傳的檔案）併進目前的中文，存檔；回傳這次對上幾句 */
+export async function applyWebReply(text: string): Promise<{ matched: number; path: string | null }> {
+  const cues = cuesOf(store.get())
+  const srt = parseSrt(text)
+  let found: (string | null)[]
+  if (srt) found = alignTo(cues, srt) // 字幕檔：依時間對
+  else {
+    const m = parseReply(text)
+    found = cues.map((c, i) => {
+      const zh = m.get(i + 1)
+      return zh && usable(c.text, zh) ? zh : null
+    })
+  }
+  const matched = found.filter(Boolean).length
+  if (!matched) return { matched, path: null }
+  store.set((st) => {
+    const zh = st.zh.slice()
+    found.forEach((z, i) => {
+      if (z) zh[i] = z
+    })
+    return { zh }
+  })
+  const path = await persistAi('web')
+  if (path) store.set({ zhStatus: `已存檔：${path}` })
+  return { matched, path }
 }

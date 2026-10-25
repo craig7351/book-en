@@ -69,6 +69,36 @@ pub fn save_subtitles(app: tauri::AppHandle, mut subs: SavedSubs) -> Result<Stri
     Err(last_err)
 }
 
+/// 網頁 AI 翻譯：題目存成文字檔放到「下載」資料夾（給想用附件上傳的 AI）
+#[tauri::command]
+pub fn save_webai_prompt(app: tauri::AppHandle, video_id: String, part: u32, text: String) -> Result<String, String> {
+    if !valid_id(&video_id) || text.len() > 2_000_000 {
+        return Err("invalid-prompt".into());
+    }
+    let dir = app.path().download_dir().map_err(err)?;
+    let file = dir.join(format!("book-en_{video_id}_第{part}段.txt"));
+    std::fs::write(&file, text).map_err(err)?;
+    Ok(file.to_string_lossy().to_string())
+}
+
+/// 網頁 AI 翻譯：用系統瀏覽器開 AI 網站（只限這幾個，YouTube 頁面上的程式不能拿來開任意網址）
+const AI_SITES: [&str; 4] =
+    ["https://chatgpt.com/", "https://gemini.google.com/app", "https://claude.ai/new", "https://chat.deepseek.com/"];
+
+#[tauri::command]
+pub fn open_ai_site(url: String) -> Result<(), String> {
+    if !AI_SITES.contains(&url.as_str()) {
+        return Err("url-not-allowed".into());
+    }
+    #[cfg(windows)]
+    let (prog, args) = ("rundll32", vec!["url.dll,FileProtocolHandler", url.as_str()]);
+    #[cfg(target_os = "macos")]
+    let (prog, args) = ("open", vec![url.as_str()]);
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let (prog, args) = ("xdg-open", vec![url.as_str()]);
+    std::process::Command::new(prog).args(args).spawn().map(|_| ()).map_err(err)
+}
+
 #[tauri::command]
 pub fn load_subtitles(app: tauri::AppHandle, video_id: String) -> Result<Option<SavedSubs>, String> {
     if !valid_id(&video_id) {

@@ -175,7 +175,7 @@ async function requestTrack(videoId: string, req: TrackRequest): Promise<Caption
 
 // ---- 中文來源 ----
 
-export type ZhKind = 'saved' | 'yt' | 'auto' | 'ai'
+export type ZhKind = 'saved' | 'yt' | 'auto' | 'ai' | 'web'
 
 export interface ZhSource {
   id: string
@@ -210,6 +210,7 @@ function zhSources(info: TracklistRenderer, english: CaptionTrack): ZhSource[] {
     })
   }
   out.push({ id: 'ai', kind: 'ai', label: 'AI 翻譯（Claude）' })
+  out.push({ id: 'web', kind: 'web', label: '網頁 AI 翻譯（免費，複製貼上）' })
   return out
 }
 
