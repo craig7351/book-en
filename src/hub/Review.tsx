@@ -420,7 +420,12 @@ function QuizView({
             {quiz.after}
           </p>
           {item.contextZh && <p className="muted">{item.contextZh}</p>}
-          <SourceLink item={item} />
+          <div className="row-btns">
+            <button onClick={() => speakSentence(item.context!)} title="聽整句（會念出答案）">
+              🔊 聽原句
+            </button>
+            <SourceLink item={item} />
+          </div>
         </>
       )}
 
