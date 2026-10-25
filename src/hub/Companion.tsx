@@ -27,9 +27,10 @@ export function Companion({
             mood={reaction ? (reaction.ok ? 'happy' : 'normal') : gs.mood}
             scale={pet.stage === 1 ? 3 : 2}
             className={reaction ? (reaction.ok ? 'px-hop' : 'px-tilt') : 'px-idle'}
+            centered
           />
         ) : (
-          egg && <EggPixel key={reaction?.n ?? 0} egg={egg} scale={2} className={reaction?.ok ? 'px-hop' : 'px-wobble'} />
+          egg && <EggPixel key={reaction?.n ?? 0} egg={egg} scale={2} className={reaction?.ok ? 'px-hop' : 'px-wobble'} centered />
         )}
       </div>
       <div className="companion-info">

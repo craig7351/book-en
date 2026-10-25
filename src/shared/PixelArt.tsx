@@ -7,6 +7,7 @@ interface Sprite {
   url: string
   w: number
   h: number
+  blank?: { top: number; bottom: number }
 }
 
 export function Pixel({
@@ -16,6 +17,7 @@ export function Pixel({
   title,
   style,
   onClick,
+  centered,
 }: {
   sprite: Sprite
   scale: number
@@ -23,7 +25,9 @@ export function Pixel({
   title?: string
   style?: CSSProperties
   onClick?: () => void
+  centered?: boolean // 依實際畫到的內容垂直置中（寵物畫在畫布下方，上面留空）
 }) {
+  const shift = centered && sprite.blank ? ((sprite.blank.bottom - sprite.blank.top) / 2) * scale : 0
   return (
     <img
       src={sprite.url}
@@ -34,7 +38,7 @@ export function Pixel({
       alt={title ?? ''}
       draggable={false}
       onClick={onClick}
-      style={{ imageRendering: 'pixelated', ...style }}
+      style={{ imageRendering: 'pixelated', ...(shift ? { position: 'relative', top: shift } : null), ...style }}
     />
   )
 }
@@ -45,12 +49,14 @@ export function PetPixel({
   scale,
   className,
   onClick,
+  centered,
 }: {
   pet: PetView
   mood?: Mood
   scale: number
   className?: string
   onClick?: () => void
+  centered?: boolean
 }) {
   const sprite = petSprite({
     species: pet.species,
@@ -60,9 +66,27 @@ export function PetPixel({
     mood,
     accessories: pet.accessories,
   })
-  return <Pixel sprite={sprite} scale={scale} className={className} title={pet.name} onClick={onClick} />
+  return <Pixel sprite={sprite} scale={scale} className={className} title={pet.name} onClick={onClick} centered={centered} />
 }
 
-export function EggPixel({ egg, scale, className }: { egg: EggView; scale: number; className?: string }) {
-  return <Pixel sprite={eggSprite(egg.species, egg.warmth / egg.need)} scale={scale} className={className} title="蛋" />
+export function EggPixel({
+  egg,
+  scale,
+  className,
+  centered,
+}: {
+  egg: EggView
+  scale: number
+  className?: string
+  centered?: boolean
+}) {
+  return (
+    <Pixel
+      sprite={eggSprite(egg.species, egg.warmth / egg.need)}
+      scale={scale}
+      className={className}
+      title="蛋"
+      centered={centered}
+    />
+  )
 }

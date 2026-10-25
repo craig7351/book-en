@@ -80,7 +80,11 @@ export function App() {
         </nav>
         {gameOn && gs && (
           <a className="pet-mini" href="#pet" title="寵物">
-            {gs.pet ? <PetPixel pet={gs.pet} mood={gs.mood} scale={1} /> : egg && <EggPixel egg={egg} scale={1} />}
+            {gs.pet ? (
+              <PetPixel pet={gs.pet} mood={gs.mood} scale={1} centered />
+            ) : (
+              egg && <EggPixel egg={egg} scale={1} centered />
+            )}
             <span>🪙 {gs.coins}</span>
           </a>
         )}

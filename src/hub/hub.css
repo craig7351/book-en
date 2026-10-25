@@ -1279,7 +1279,7 @@ code {
   width: 88px;
   height: 88px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
 }
 

@@ -82,6 +82,16 @@ export class Px {
     return out
   }
 
+  /** 上方、下方各有幾列全透明（圖示要依實際內容置中時用） */
+  blankRows(): { top: number; bottom: number } {
+    const filled = (y: number) => this.data.slice(y * this.w, (y + 1) * this.w).some((c) => c)
+    let top = 0
+    while (top < this.h && !filled(top)) top++
+    let bottom = 0
+    while (bottom < this.h - top && !filled(this.h - 1 - bottom)) bottom++
+    return { top, bottom }
+  }
+
   toDataURL(): string {
     const canvas = document.createElement('canvas')
     canvas.width = this.w
@@ -114,13 +124,13 @@ function hex(c: string): [number, number, number] {
 }
 
 // 產生圖片很便宜，但同一張圖會在畫面上重複出現 → 依 key 快取
-const cache = new Map<string, { url: string; w: number; h: number }>()
+const cache = new Map<string, { url: string; w: number; h: number; blank: { top: number; bottom: number } }>()
 
 export function cached(key: string, make: () => Px) {
   let hit = cache.get(key)
   if (!hit) {
     const px = make()
-    hit = { url: px.toDataURL(), w: px.w, h: px.h }
+    hit = { url: px.toDataURL(), w: px.w, h: px.h, blank: px.blankRows() }
     cache.set(key, hit)
   }
   return hit
