@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, errorText } from '../shared/api'
-import { speakItem } from '../shared/speak'
+import { speakItem, speakSentence } from '../shared/speak'
 import { lemmaCandidates, normWord, tokenize } from '../shared/tokenize'
 import type { Item } from '../shared/types'
 import { game, MAX_LEVEL, playSfx, type GameState, type Reward } from '../shared/game'
@@ -337,7 +337,14 @@ function QuizView({
         {item.phonetic && <span className="phonetic">/{item.phonetic}/</span>}
       </div>
       {item.kind === 'word' && item.meaningZh && <div className="meaning">{item.meaningZh}</div>}
-      {item.context && item.kind === 'word' && <div className="ctx">{item.context}</div>}
+      {item.context && item.kind === 'word' && (
+        <div className="ctx">
+          <button className="say small" title="念原句" onClick={() => speakSentence(item.context!)}>
+            🔊
+          </button>
+          {item.context}
+        </div>
+      )}
       {item.contextZh && <div className="muted">{item.contextZh}</div>}
       <SourceLink item={item} />
     </div>
