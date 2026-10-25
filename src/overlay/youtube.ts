@@ -209,7 +209,7 @@ function zhSources(info: TracklistRenderer, english: CaptionTrack): ZhSource[] {
       req: { lang: english.languageCode, kind: english.kind, tlang: 'zh-Hant' },
     })
   }
-  out.push({ id: 'ai', kind: 'ai', label: 'AI 翻譯（Claude）' })
+  out.push({ id: 'ai', kind: 'ai', label: 'AI 翻譯（本機 AI）' })
   out.push({ id: 'web', kind: 'web', label: '網頁 AI 翻譯（免費，複製貼上）' })
   return out
 }

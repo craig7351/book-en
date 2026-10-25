@@ -14,7 +14,7 @@ export interface Prefs {
   showZh: boolean // 顯示中文翻譯
   layer: boolean // 影片上顯示 book-en 字幕（取代原生 CC）
   rate: number
-  model: string // 翻譯用的 Claude 模型
+  model: string // AI 翻譯用的引擎與模型（shared/aicli.ts：「haiku」「codex:gpt-5.6-luna」…）
   zhKind: ZhKind | null // 上次選的中文來源；null = 自動（有 YouTube 中文就用）
   subSize: number // 影片字幕大小（%）
   knownMax: number // 詞頻分級：排名 ≤ 這個 = 基礎（自動已知）

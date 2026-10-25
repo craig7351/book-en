@@ -1,5 +1,5 @@
-// 單字卡例句（M10）：例句庫（Tatoeba，離線，在 ecdict.db）與 AI 例句（claude -p，依原形快取）。
-use crate::claude;
+// 單字卡例句（M10）：例句庫（Tatoeba，離線，在 ecdict.db）與 AI 例句（本機 AI CLI，依原形快取）。
+use crate::ai_cli;
 use crate::db::{self, err, now_ms, Db, Dict};
 use rusqlite::{params, OptionalExtension};
 use serde::{Deserialize, Serialize};
@@ -62,8 +62,8 @@ pub async fn ai_examples(
          Reply with ONLY a JSON array, no other text: [{{\"en\":\"...\",\"zh\":\"...\"}}]"
     );
     let m = model.clone();
-    let reply = tauri::async_runtime::spawn_blocking(move || claude::run(&prompt, &m)).await.map_err(err)??;
-    let arr = claude::extract_json_array(&reply).ok_or("bad-reply")?;
+    let reply = tauri::async_runtime::spawn_blocking(move || ai_cli::run(&prompt, &m)).await.map_err(err)??;
+    let arr = ai_cli::extract_json_array(&reply).ok_or("bad-reply")?;
     let examples: Vec<Example> = arr
         .as_array()
         .into_iter()

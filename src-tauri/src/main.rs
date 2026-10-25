@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod bookmarks;
-mod claude;
+mod ai_cli;
 mod db;
 mod dict;
 mod dictfile;
@@ -87,7 +87,8 @@ fn main() {
             translate::translate_batch,
             translate::translation_cached,
             translate::ai_explain,
-            translate::claude_status,
+            translate::ai_status,
+            translate::ai_models,
             dict::dict_lookup,
             dict::dict_online,
             vocab::item_add,
@@ -229,7 +230,7 @@ mod tests {
 
     #[test]
     fn extract_json() {
-        let v = claude::extract_json_array("```json\n[{\"i\":1,\"zh\":\"你好\"}]\n```").unwrap();
+        let v = ai_cli::extract_json_array("```json\n[{\"i\":1,\"zh\":\"你好\"}]\n```").unwrap();
         assert_eq!(v[0]["zh"], "你好");
     }
 }

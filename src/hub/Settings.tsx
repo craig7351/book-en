@@ -15,7 +15,9 @@ import {
   setVoicePrefs,
   type Accent,
 } from '../shared/speak'
-import { MODELS, type DictStatus } from '../shared/types'
+import { type DictStatus } from '../shared/types'
+import { defaultModel, joinModel, parseModel, providerInfo, PROVIDERS, type Provider } from '../shared/aicli'
+import { useModelOptions } from '../shared/useModels'
 import { CHUNK_OPTIONS, DEFAULT_CHUNK } from '../shared/webai'
 
 type SubTab = 'general' | 'credits'
@@ -38,10 +40,79 @@ export function Settings({ gs, onGameChange }: { gs: GameState | null; onGameCha
   )
 }
 
+// AI 翻譯、AI 解釋、AI 例句用的本機 CLI：引擎、模型、安裝狀態與官方安裝教學
+function AiEngine({ model, onChange }: { model: string; onChange: (model: string) => void }) {
+  const ai = parseModel(model)
+  const info = providerInfo(ai.provider)
+  const options = useModelOptions(ai.provider, model)
+  const [status, setStatus] = useState<{ text: string; ok?: boolean } | null>(null)
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    let alive = true
+    setStatus(null)
+    api
+      .aiStatus(ai.provider)
+      .then((v) => alive && setStatus({ text: `✓ 已安裝：${v}`, ok: true }))
+      .catch((e) => alive && setStatus({ text: errorText(e) }))
+    return () => {
+      alive = false
+    }
+  }, [ai.provider, tick])
+
+  const open = (url: string) => api.openAiSite(url).catch((e) => setStatus({ text: errorText(e) }))
+
+  return (
+    <>
+      <label className="row">
+        <span>AI 引擎</span>
+        <select value={ai.provider} onChange={(e) => onChange(defaultModel(e.target.value as Provider))}>
+          {PROVIDERS.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+        <select value={ai.model} title="模型" onChange={(e) => onChange(joinModel(ai.provider, e.target.value))}>
+          {options.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="row">
+        <span>{info.name}</span>
+        <span className={status?.ok ? 'ok' : status ? 'error' : 'muted'}>{status?.text ?? '檢查中…'}</span>
+        <button onClick={() => setTick((n) => n + 1)}>重新檢查</button>
+        <button className="link" onClick={() => open(info.install)}>
+          安裝教學 ↗
+        </button>
+      </div>
+      {status && !status.ok && (
+        <p className="muted small">
+          照官方教學安裝後，{info.login}，再按「重新檢查」。
+        </p>
+      )}
+      <p className="muted">
+        AI 翻譯、AI 解釋與 AI 例句使用本機的 AI CLI，用你已登入的帳號（訂閱額度），不需要 API key。
+        翻譯結果會存在 <code>subtitles</code> 資料夾（Windows 在 exe 同目錄，其他平台在 App 資料夾），同一支影片不會重複翻譯。
+      </p>
+      <p className="muted small">
+        官方安裝教學：
+        {PROVIDERS.map((p) => (
+          <button key={p.id} className="link" onClick={() => open(p.install)}>
+            {p.name}
+          </button>
+        ))}
+      </p>
+    </>
+  )
+}
+
 // 偏好設定與 YouTube 面板共用（存在 Rust 端 settings 表的 prefs）
 function General({ gs, onGameChange }: { gs: GameState | null; onGameChange: () => void }) {
   const [prefs, setPrefs] = useState<Record<string, unknown>>({})
-  const [claude, setClaude] = useState<string>('檢查中…')
   const [dict, setDict] = useState<DictStatus | null>(null)
 
   useEffect(() => {
@@ -50,16 +121,7 @@ function General({ gs, onGameChange }: { gs: GameState | null; onGameChange: () 
       .getSetting('prefs')
       .then((raw) => setPrefs(raw ? JSON.parse(raw) : {}))
       .catch(() => {})
-    checkClaude()
   }, [])
-
-  function checkClaude() {
-    setClaude('檢查中…')
-    api
-      .claudeStatus()
-      .then((v) => setClaude(`✓ 已安裝：${v}`))
-      .catch((e) => setClaude(errorText(e)))
-  }
 
   async function update(patch: Record<string, unknown>) {
     // 讀最新的再合併，避免蓋掉 YouTube 面板剛改的設定
@@ -73,25 +135,7 @@ function General({ gs, onGameChange }: { gs: GameState | null; onGameChange: () 
   return (
     <>
       <h2>翻譯</h2>
-      <label className="row">
-        <span>Claude 模型</span>
-        <select value={(prefs.model as string) ?? 'haiku'} onChange={(e) => update({ model: e.target.value })}>
-          {MODELS.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="muted">
-        AI 翻譯與 AI 解釋使用本機的 Claude Code CLI（<code>claude -p</code>），用你已登入的帳號，不需要 API key。
-        翻譯結果會存在 <code>subtitles</code> 資料夾（Windows 在 exe 同目錄，其他平台在 App 資料夾），同一支影片不會重複翻譯。
-      </p>
-      <div className="row">
-        <span>Claude Code</span>
-        <span>{claude}</span>
-        <button onClick={checkClaude}>重新檢查</button>
-      </div>
+      <AiEngine model={(prefs.model as string) || 'haiku'} onChange={(model) => update({ model })} />
       <label className="row">
         <span>網頁 AI 每段句數</span>
         <select
@@ -478,7 +522,25 @@ const SERVICES: Credit[] = [
     name: 'Claude Code（Anthropic）',
     url: 'https://www.anthropic.com/claude-code',
     license: '依 Anthropic 服務條款，使用者自己的帳號',
-    use: 'AI 字幕翻譯、單字句中解釋',
+    use: 'AI 字幕翻譯、單字句中解釋、AI 例句（可選的 AI 引擎）',
+  },
+  {
+    name: 'Codex CLI（OpenAI）',
+    url: 'https://developers.openai.com/codex/cli',
+    license: '依 OpenAI 服務條款，使用者自己的帳號',
+    use: '可選的 AI 引擎',
+  },
+  {
+    name: 'Antigravity CLI（Google）',
+    url: 'https://antigravity.google/docs/cli',
+    license: '依 Google 服務條款，使用者自己的帳號',
+    use: '可選的 AI 引擎',
+  },
+  {
+    name: 'Gemini CLI（Google）',
+    url: 'https://geminicli.com',
+    license: 'Apache-2.0（CLI）；模型依 Google 服務條款',
+    use: '可選的 AI 引擎',
   },
 ]
 

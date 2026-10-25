@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { api, errorText } from '../../shared/api'
-import { MODELS } from '../../shared/types'
+import { joinModel, parseModel, providerInfo } from '../../shared/aicli'
+import { useModelOptions } from '../../shared/useModels'
 import { cheerPet, nextCue, prevCue, replayCue, refreshSaved, seekCue, setPrefs } from '../controller'
 import type { Cue } from '../cues'
 import { cuesOf, store, useStore, type CaptionState, type Prefs } from '../store'
@@ -137,6 +138,9 @@ function ZhControls() {
   const transError = useStore((s) => s.transError)
   const aiMissing = useStore((s) => s.aiMissing)
   const zh = useStore((s) => s.zh)
+  const ai = parseModel(model)
+  const aiName = providerInfo(ai.provider).name.replace(/（.*$/, '')
+  const models = useModelOptions(ai.provider, model)
   if (captions.status !== 'ready') return null
   const list = captions.result.zhSources
   const current = list.find((x) => x.id === zhSource)
@@ -157,14 +161,18 @@ function ZhControls() {
       >
         {list.map((x) => (
           <option key={x.id} value={x.id}>
-            {x.label}
+            {x.kind === 'ai' ? `AI 翻譯（${aiName}）` : x.label}
           </option>
         ))}
       </select>
       {current?.kind === 'ai' && (
         <>
-          <select value={model} title="翻譯用的 Claude 模型" onChange={(e) => setPrefs({ model: e.target.value })}>
-            {MODELS.map((m) => (
+          <select
+            value={ai.model}
+            title={`翻譯用的 ${aiName} 模型（換 AI 引擎：學習中心 → 設定 → 翻譯）`}
+            onChange={(e) => setPrefs({ model: joinModel(ai.provider, e.target.value) })}
+          >
+            {models.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.label}
               </option>

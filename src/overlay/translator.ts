@@ -1,5 +1,6 @@
-// 中文來源：YouTube 中文字幕 / Google 自動翻譯（YouTube 內建）/ AI 翻譯（claude -p）/ 網頁 AI（使用者複製貼上）。
-// YouTube 來源免費又快 → 選了就載入；AI 只先讀快取，按「開始 AI 翻譯」才呼叫 claude。
+// 中文來源：YouTube 中文字幕 / Google 自動翻譯（YouTube 內建）/ AI 翻譯（本機 AI CLI）/ 網頁 AI（使用者複製貼上）。
+// YouTube 來源免費又快 → 選了就載入；AI 只先讀快取，按「開始 AI 翻譯」才呼叫 AI。
+import { modelLabel } from '../shared/aicli'
 import { api, errorText } from '../shared/api'
 import type { SavedSubs } from '../shared/types'
 import { alignTo, looksChinese } from './cues'
@@ -29,7 +30,7 @@ let saved: SavedSubs | null = null
 function savedLabel(s: SavedSubs): string {
   const d = s.savedAt ? new Date(s.savedAt) : null
   const date = d ? `${d.getMonth() + 1}/${d.getDate()}` : ''
-  return `已存的 AI 字幕（${s.model === 'web' ? '網頁 AI' : s.model}${date ? '・' + date : ''}${s.complete ? '' : '・未完成'}）`
+  return `已存的 AI 字幕（${s.model === 'web' ? '網頁 AI' : modelLabel(s.model)}${date ? '・' + date : ''}${s.complete ? '' : '・未完成'}）`
 }
 
 // 把存檔放進來源清單最前面（已有就更新標籤）
@@ -149,7 +150,7 @@ function dropSource(id: string): void {
   })
 }
 
-// AI 來源：先讀 SQLite 快取（不呼叫 claude）
+// AI 來源：先讀 SQLite 快取（不呼叫 AI）
 async function loadAiCached(my: number, note: string | null): Promise<void> {
   const cues = cuesOf(store.get())
   try {
@@ -212,8 +213,8 @@ export async function startTranslation(): Promise<void> {
           idx.forEach((i) => (zh[i] = zh[i] ?? null))
           return { zh, transError: errorText(e), aiMissing: zh.filter((z) => typeof z !== 'string').length }
         })
-        // 找不到 claude 時其他批次也不用試了
-        if (String(e).includes('claude-not-found')) queue.length = 0
+        // 找不到 CLI 時其他批次也不用試了
+        if (String(e).includes('ai-not-found')) queue.length = 0
       }
     }
   }

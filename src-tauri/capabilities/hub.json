@@ -11,7 +11,8 @@
     "allow-play-source",
     "allow-translate-batch",
     "allow-translation-cached",
-    "allow-claude-status",
+    "allow-ai-status",
+    "allow-ai-models",
     "allow-dict-lookup",
     "allow-dict-online",
     "allow-item-add",
@@ -51,6 +52,7 @@
     "allow-tts-download",
     "allow-tts-remove",
     "allow-item-delete-many",
-    "allow-item-suspend"
+    "allow-item-suspend",
+    "allow-open-ai-site"
   ]
 }

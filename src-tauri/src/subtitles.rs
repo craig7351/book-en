@@ -81,9 +81,17 @@ pub fn save_webai_prompt(app: tauri::AppHandle, video_id: String, part: u32, tex
     Ok(file.to_string_lossy().to_string())
 }
 
-/// 網頁 AI 翻譯：用系統瀏覽器開 AI 網站（只限這幾個，YouTube 頁面上的程式不能拿來開任意網址）
-const AI_SITES: [&str; 4] =
-    ["https://chatgpt.com/", "https://gemini.google.com/app", "https://claude.ai/new", "https://chat.deepseek.com/"];
+/// 用系統瀏覽器開 AI 網站（網頁 AI 翻譯）與 AI CLI 的官方安裝教學；只限這幾個，YouTube 頁面上的程式不能拿來開任意網址
+const AI_SITES: [&str; 8] = [
+    "https://chatgpt.com/",
+    "https://gemini.google.com/app",
+    "https://claude.ai/new",
+    "https://chat.deepseek.com/",
+    "https://code.claude.com/docs/en/setup",
+    "https://developers.openai.com/codex/cli",
+    "https://antigravity.google/docs/cli",
+    "https://geminicli.com/docs/get-started/installation",
+];
 
 #[tauri::command]
 pub fn open_ai_site(url: String) -> Result<(), String> {

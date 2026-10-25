@@ -1,5 +1,5 @@
-// 字幕翻譯：先查快取，缺的整批交給 claude -p，依編號對齊後寫回快取。
-use crate::claude;
+// 字幕翻譯：先查快取，缺的整批交給本機 AI CLI（claude / codex / agy / gemini），依編號對齊後寫回快取。
+use crate::ai_cli;
 use crate::db::{err, Db};
 use rusqlite::{params, OptionalExtension};
 use tauri::State;
@@ -44,10 +44,10 @@ pub async fn translate_batch(
         prompt.push_str(&format!("{}. {}\n", n + 1, lines[i].replace('\n', " ")));
     }
     let m = model.clone();
-    let reply = tauri::async_runtime::spawn_blocking(move || claude::run(&prompt, &m))
+    let reply = tauri::async_runtime::spawn_blocking(move || ai_cli::run(&prompt, &m))
         .await
         .map_err(err)??;
-    let arr = claude::extract_json_array(&reply).ok_or("bad-reply")?;
+    let arr = ai_cli::extract_json_array(&reply).ok_or("bad-reply")?;
 
     let conn = db.0.lock().map_err(err)?;
     for item in arr.as_array().into_iter().flatten() {
@@ -74,12 +74,21 @@ pub async fn ai_explain(word: String, sentence: String, model: String) -> Result
         "你是英文老師，學生是台灣人。請用繁體中文（台灣用語）簡短說明英文單字或片語「{word}」\
          在下面這句話中的意思與用法，2 到 3 句話，不要加標題或 Markdown。\n\n句子：{sentence}"
     );
-    tauri::async_runtime::spawn_blocking(move || claude::run(&prompt, &model))
+    tauri::async_runtime::spawn_blocking(move || ai_cli::run(&prompt, &model))
         .await
         .map_err(err)?
 }
 
+/// AI CLI 的版本（順便確認裝了沒）；provider = claude / codex / agy / gemini
 #[tauri::command]
-pub async fn claude_status() -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(claude::version).await.map_err(err)?
+pub async fn ai_status(provider: String) -> Result<String, String> {
+    let cli = ai_cli::Cli::from_id(&provider).ok_or("bad-provider")?;
+    tauri::async_runtime::spawn_blocking(move || ai_cli::version(cli)).await.map_err(err)?
+}
+
+/// 可選的模型 [(id, 名稱)]
+#[tauri::command]
+pub async fn ai_models(provider: String) -> Result<Vec<(String, String)>, String> {
+    let cli = ai_cli::Cli::from_id(&provider).ok_or("bad-provider")?;
+    tauri::async_runtime::spawn_blocking(move || ai_cli::models(cli)).await.map_err(err)?
 }

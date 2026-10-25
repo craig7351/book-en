@@ -10,7 +10,8 @@
 - **雙語字幕：** 英文字幕自動斷句，中文字幕可選以下來源：
   - YouTube 中文字幕
   - Google 自動翻譯
-  - AI 翻譯（Claude）
+  - AI 翻譯（本機的 Claude Code、Codex、Antigravity 或 Gemini CLI）
+  - 網頁 AI 翻譯（把題目複製到免費的 ChatGPT、Gemini 等網頁，再貼回來）
   - 已存檔的翻譯
 - **逐句精聽：**
   - 每句自動暫停、重播、循環，調整速度
@@ -61,10 +62,18 @@
 
 ### AI 功能（選用）
 
-AI 翻譯、AI 解釋、AI 例句會呼叫本機的 [Claude Code](https://www.anthropic.com/claude-code) CLI（`claude -p`），用你已登入的帳號，不需要 API key。
+AI 翻譯、AI 解釋、AI 例句會呼叫本機的 AI CLI，用你已登入的帳號，不需要 API key。支援以下四種，裝一種就好：
 
-- 先安裝 Claude Code，並在終端機登入一次。
-- 模型可以在設定裡選（預設 Haiku）。
+| AI 引擎 | 指令 | 官方安裝教學 |
+| --- | --- | --- |
+| Claude Code（Anthropic） | `claude` | [code.claude.com/docs/en/setup](https://code.claude.com/docs/en/setup) |
+| Codex（OpenAI） | `codex` | [developers.openai.com/codex/cli](https://developers.openai.com/codex/cli) |
+| Antigravity（Google） | `agy` | [antigravity.google/docs/cli](https://antigravity.google/docs/cli) |
+| Gemini CLI（Google） | `gemini` | [geminicli.com/docs/get-started/installation](https://geminicli.com/docs/get-started/installation) |
+
+- 安裝後在終端機執行一次該指令並登入。
+- 在「學習中心 → 設定 → 翻譯」選 AI 引擎和模型（預設 Claude Haiku），那裡也會顯示有沒有裝好，並附安裝教學連結。
+- 沒有裝任何 AI CLI 也能用「網頁 AI 翻譯」：把題目複製到免費的 ChatGPT、Gemini 等網頁，再把回覆貼回來。
 - 翻譯結果會存檔，同一支影片不會重複翻譯。
 
 ## 從原始碼建置
@@ -112,7 +121,7 @@ node tools/package-dict.mjs
 src/overlay/     注入 youtube.com 的介面：字幕擷取、雙語字幕、面板、單字卡
 src/hub/         學習中心：單字庫、複習、詞彙、設定、字典下載
 src/shared/      共用：API、型別、分級、斷詞、朗讀
-src-tauri/src/   Rust 後端：SQLite、字典、翻譯（claude -p）、複習排程、字典下載
+src-tauri/src/   Rust 後端：SQLite、字典、翻譯（本機 AI CLI）、複習排程、字典下載
 tools/           建字典的腳本、CDP 測試工具
 ```
 

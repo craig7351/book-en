@@ -903,6 +903,14 @@ main {
   color: var(--muted);
 }
 
+.settings .ok {
+  color: var(--ok);
+}
+
+.settings .error {
+  color: var(--bad);
+}
+
 .keys td {
   padding: 4px 16px 4px 0;
 }

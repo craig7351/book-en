@@ -115,12 +115,6 @@ export interface Bookmark {
   createdAt: number
 }
 
-export const MODELS = [
-  { id: 'haiku', label: 'Haiku（快、省）' },
-  { id: 'sonnet', label: 'Sonnet（品質較好）' },
-  { id: 'opus', label: 'Opus（最好、較慢）' },
-] as const
-
 // Kokoro 離線語音的下載狀態
 export interface TtsStatus {
   supported: boolean // 這個平台的版本有沒有 Kokoro（Intel Mac 沒有）

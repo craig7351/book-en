@@ -34,7 +34,8 @@ export const api = {
   openAiSite: (url: string) => invoke<void>('open_ai_site', { url }),
   aiExplain: (word: string, sentence: string, model: string) =>
     invoke<string>('ai_explain', { word, sentence, model }),
-  claudeStatus: () => invoke<string>('claude_status'),
+  aiStatus: (provider: string) => invoke<string>('ai_status', { provider }),
+  aiModels: (provider: string) => invoke<[string, string][]>('ai_models', { provider }),
 
   dictLookup: (word: string) => invoke<LookupResult>('dict_lookup', { word }),
   dictOnline: (word: string) => invoke<OnlineInfo>('dict_online', { word }),
@@ -81,9 +82,11 @@ export const api = {
 // 錯誤訊息轉成給人看的中文
 export function errorText(e: unknown): string {
   const s = String(e)
-  if (s.includes('claude-not-found')) return '找不到 Claude Code CLI：請先安裝並在終端機執行 claude 登入'
-  if (s.includes('claude-error') || s.includes('claude-failed')) return `Claude 回覆錯誤：${s.replace(/^.*?claude-(error|failed):?\s*/, '')}`
-  if (s.includes('bad-reply')) return 'Claude 回覆格式不對，請重試'
+  const notFound = s.match(/ai-not-found:(.*)/)
+  if (notFound) return `找不到 ${notFound[1]}：請先安裝並在終端機登入（學習中心 → 設定 → 翻譯 有安裝教學）`
+  const aiError = s.match(/ai-error:([^:]*):([\s\S]*)/)
+  if (aiError) return `${aiError[1]} 回覆錯誤：${aiError[2]}`
+  if (s.includes('bad-reply')) return 'AI 回覆格式不對，請重試'
   if (s.includes('no-tauri')) return '未連線到 book-en 主程式'
   if (s.includes('no-dict')) return '尚未安裝離線字典（學習中心 → 設定 → 字典可下載）'
   if (s.includes('tts-unsupported')) return '這個平台的版本不支援 Kokoro 語音（Intel Mac）'
