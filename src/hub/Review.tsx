@@ -115,9 +115,29 @@ export function Review({ onChanged, gs }: { onChanged: () => void; gs: GameState
   const [party, setParty] = useState<Reward | null>(null)
   const sound = !!gs?.options.sound
 
-  function onResult(ok: boolean) {
+  // 自動判分的題型：一作答就送出評分（寵物經驗、金幣立刻加），按「下一題」只換題
+  const graded = useRef<Promise<void> | null>(null)
+
+  function react(ok: boolean) {
     setReaction((p) => ({ ok, n: (p?.n ?? 0) + 1 }))
     playSfx(ok ? 'correct' : 'wrong', sound)
+  }
+
+  function onResult(ok: boolean) {
+    react(ok)
+    graded.current = grade(ok ? 4 : 1)
+  }
+
+  async function grade(quality: number) {
+    if (!quiz) return
+    if (!practice) {
+      const res = await api.reviewGrade(quiz.item.id, quality, quiz.kind)
+      gotReward(res.reward)
+      onChanged()
+    } else if (gs) {
+      gotReward(await game.practice(quality >= 3).catch(() => null))
+      onChanged()
+    }
   }
 
   function gotReward(r: Reward | null) {
@@ -183,14 +203,14 @@ export function Review({ onChanged, gs }: { onChanged: () => void; gs: GameState
 
   async function finish(quality: number) {
     if (!quiz || !queue) return
-    if (quiz.kind === 'recall') onResult(quality >= 3) // 句子題是自評，沒有 check 的時機
-    if (!practice) {
-      const res = await api.reviewGrade(quiz.item.id, quality, quiz.kind)
-      gotReward(res.reward)
-      onChanged()
-    } else if (gs) {
-      gotReward(await game.practice(quality >= 3).catch(() => null))
-      onChanged()
+    if (quiz.kind === 'recall') {
+      // 句子題是自評，按評分鈕時才送出
+      react(quality >= 3)
+      await grade(quality)
+    } else {
+      const g = graded.current
+      graded.current = null
+      await g
     }
     setScore((s) => ({ right: s.right + (quality >= 3 ? 1 : 0), total: s.total + 1 }))
     const rest = queue.slice(1)
