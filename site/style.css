@@ -1057,6 +1057,27 @@ details p {
   margin: 0;
 }
 
+.author {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin: 6px 0 4px;
+  font-size: 15px;
+}
+
+.author a {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 14px;
+  color: var(--fg);
+}
+
+.author a:hover {
+  border-color: var(--brand-1);
+  color: var(--brand-1);
+}
+
 .foot .counter {
   color: var(--muted);
   font-size: 14px;
