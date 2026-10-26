@@ -781,24 +781,75 @@ kbd {
   color: var(--muted);
 }
 
-.dl {
-  text-align: center;
+.dl-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
   margin-top: 56px;
 }
 
-.dl-list {
+.dl-card {
+  position: relative;
   display: flex;
-  gap: 10px 26px;
-  justify-content: center;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 15px;
-  margin-top: 22px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 32px 24px 28px;
 }
 
-.dl-list .me {
-  color: var(--fg);
+.dl-card.me {
+  border-color: var(--brand-1);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.12), var(--shadow);
+}
+
+.dl-card .mine {
+  display: none;
+  position: absolute;
+  top: -13px;
+  background: var(--hl);
+  color: #fff;
+  font-size: 13px;
   font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 14px;
+}
+
+.dl-card.me .mine {
+  display: block;
+}
+
+.dl-ico {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.dl-card h3 {
+  font-size: 22px;
+}
+
+.dl-card p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.dl-card .btn {
+  width: 100%;
+  max-width: 260px;
+  justify-content: center;
+  padding: 12px 20px;
+  font-size: 16px;
+}
+
+.dl-note {
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+  margin-top: 28px;
 }
 
 /* 常見問題 */
@@ -944,7 +995,8 @@ details p {
   }
 
   .case-grid,
-  .start-steps {
+  .start-steps,
+  .dl-grid {
     grid-template-columns: 1fr;
   }
 

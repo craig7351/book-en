@@ -294,18 +294,36 @@
           <h2>三個步驟，今天就開始</h2>
         </div>
         <ol class="start-steps">
-          <li class="reveal"><b>1</b><h3>下載安裝</h3><p>到 GitHub Releases 下載你的系統版本，安裝檔已內含離線字典。</p></li>
+          <li class="reveal"><b>1</b><h3>下載安裝</h3><p>在下方選你的系統下載，Windows、macOS、Linux 都有，安裝檔已內含離線字典。</p></li>
           <li class="reveal"><b>2</b><h3>打開任一支影片</h3><p>book-en 會打開 YouTube，挑一支有英文字幕的影片，右邊就會出現字幕面板。</p></li>
           <li class="reveal"><b>3</b><h3>點字、收藏、複習</h3><p>遇到生字點一下收藏，到「學習中心」複習，寵物就會開始長大。</p></li>
         </ol>
-        <div class="dl reveal">
-          <a class="btn btn-dark btn-lg" id="dl-main" href="https://github.com/craig7351/book-en/releases/latest">免費下載 <span class="arrow">↗</span></a>
-          <p class="dl-list">
-            <span data-os="win">Windows 10 / 11（.exe）</span>
-            <span data-os="mac">macOS Apple Silicon / Intel（.dmg）</span>
-            <span data-os="linux">Linux（.AppImage / .deb）</span>
-          </p>
+        <div class="dl-grid">
+          <div class="dl-card reveal" data-os="win">
+            <span class="mine">你的系統</span>
+            <div class="dl-ico">🪟</div>
+            <h3>Windows</h3>
+            <p>Windows 10 / 11（64 位元）</p>
+            <a class="btn btn-dark" data-asset="win" href="https://github.com/craig7351/book-en/releases/latest">下載 .exe</a>
+          </div>
+          <div class="dl-card reveal" data-os="mac">
+            <span class="mine">你的系統</span>
+            <div class="dl-ico">🍎</div>
+            <h3>macOS</h3>
+            <p>M1 以後的 Mac 選 Apple Silicon</p>
+            <a class="btn btn-dark" data-asset="mac-arm" href="https://github.com/craig7351/book-en/releases/latest">Apple Silicon（.dmg）</a>
+            <a class="btn btn-soft" data-asset="mac-intel" href="https://github.com/craig7351/book-en/releases/latest">Intel（.dmg）</a>
+          </div>
+          <div class="dl-card reveal" data-os="linux">
+            <span class="mine">你的系統</span>
+            <div class="dl-ico">🐧</div>
+            <h3>Linux</h3>
+            <p>64 位元，Ubuntu 24.04 等較新的發行版</p>
+            <a class="btn btn-dark" data-asset="appimage" href="https://github.com/craig7351/book-en/releases/latest">AppImage</a>
+            <a class="btn btn-soft" data-asset="deb" href="https://github.com/craig7351/book-en/releases/latest">.deb</a>
+          </div>
         </div>
+        <p class="dl-note">全部免費，安裝檔已內含離線字典<span class="ver"></span>　·　<a href="https://github.com/craig7351/book-en/releases/latest" target="_blank" rel="noopener">所有版本與更新紀錄</a></p>
       </div>
     </section>
 
@@ -331,7 +349,7 @@
       <div class="final-card reveal">
         <h2>下一支想看的影片，<br>就是你的英文課</h2>
         <p>不用改變看影片的習慣，讓 book-en 把每個生字留下來。</p>
-        <a class="btn btn-light btn-lg" href="https://github.com/craig7351/book-en/releases/latest">免費下載 book-en <span class="arrow">↗</span></a>
+        <a class="btn btn-light btn-lg" href="#download">免費下載 book-en <span class="arrow">↗</span></a>
       </div>
     </section>
   </main>

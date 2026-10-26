@@ -12,15 +12,30 @@ const io = new IntersectionObserver(
 )
 document.querySelectorAll('.reveal').forEach((el) => io.observe(el))
 
-// 標出訪客的作業系統
+// 標出訪客的作業系統（三個平台都照樣顯示）
 const ua = navigator.userAgent
 const os = /Windows/.test(ua) ? 'win' : /Mac OS X|Macintosh/.test(ua) ? 'mac' : /Linux/.test(ua) && !/Android/.test(ua) ? 'linux' : null
-if (os) {
-  document.querySelector(`.dl-list [data-os="${os}"]`)?.classList.add('me')
-  const label = { win: 'Windows', mac: 'macOS', linux: 'Linux' }[os]
-  const main = document.getElementById('dl-main')
-  if (main) main.firstChild.textContent = `免費下載 ${label} 版 `
+if (os) document.querySelector(`.dl-card[data-os="${os}"]`)?.classList.add('me')
+
+// 下載按鈕直接連到最新版的安裝檔；查不到就留在 Releases 頁
+const ASSETS = {
+  win: /x64-setup\.exe$/,
+  'mac-arm': /aarch64\.dmg$/,
+  'mac-intel': /x64\.dmg$/,
+  appimage: /\.AppImage$/,
+  deb: /\.deb$/,
 }
+fetch('https://api.github.com/repos/craig7351/book-en/releases/latest')
+  .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+  .then((rel) => {
+    for (const a of document.querySelectorAll('[data-asset]')) {
+      const asset = rel.assets.find((x) => ASSETS[a.dataset.asset].test(x.name))
+      if (asset) a.href = asset.browser_download_url
+    }
+    const ver = document.querySelector('.dl-note .ver')
+    if (ver && rel.tag_name) ver.textContent = `　·　目前版本 ${rel.tag_name}`
+  })
+  .catch(() => {})
 
 // 點截圖放大
 const box = document.querySelector('.lightbox')
