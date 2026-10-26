@@ -940,6 +940,33 @@ kbd {
   white-space: nowrap;
 }
 
+.vt {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 40px;
+  align-items: center;
+  margin-top: 22px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 32px;
+}
+
+.vt h3 {
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 900;
+  margin-bottom: 12px;
+}
+
+.vt p {
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.vt .frame {
+  border-radius: 12px;
+}
+
 /* 常見問題 */
 
 .faq {
@@ -1030,6 +1057,15 @@ details p {
   margin: 0;
 }
 
+.foot .counter {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.foot .counter b {
+  color: var(--fg);
+}
+
 /* 捲動淡入 */
 
 .reveal {
@@ -1086,7 +1122,8 @@ details p {
   .start-steps,
   .dl-grid,
   .trust-steps,
-  .cmds {
+  .cmds,
+  .vt {
     grid-template-columns: 1fr;
   }
 

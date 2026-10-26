@@ -364,7 +364,15 @@
             <div><span class="muted">Windows（PowerShell）</span><code>Get-FileHash .\book-en_0.1.0_x64-setup.exe</code></div>
             <div><span class="muted">macOS / Linux（終端機）</span><code>shasum -a 256 book-en_0.1.0_*.dmg</code></div>
           </div>
-          <p class="muted small">想多一層確認，也可以把安裝檔上傳到 <a href="https://www.virustotal.com/" target="_blank" rel="noopener">VirusTotal</a> 用幾十家防毒引擎掃描。</p>
+        </div>
+        <div class="vt reveal">
+          <div class="vt-text">
+            <span class="kicker">VirusTotal 掃描結果</span>
+            <h3>69 家防毒引擎，<br><span class="hl">0 家判定有問題</span></h3>
+            <p>我們把 Release 上的 Windows 安裝檔（v0.1.0，SHA-256 開頭 <code>73af453e</code>）上傳到 Google 旗下的 VirusTotal，用 69 家防毒引擎同時掃描，結果全部未偵測到威脅。</p>
+            <p class="small"><a href="https://www.virustotal.com/gui/file/73af453e41d914567343bd0a3b6d6d8b3797dd8ffa11a56c95f23ab0e60d708d" target="_blank" rel="noopener">在 VirusTotal 看完整報告 ↗</a></p>
+          </div>
+          <figure class="frame"><img src="img/virustotal.webp" width="2360" height="1220" loading="lazy" alt="VirusTotal 報告：book-en_0.1.0_x64-setup.exe，0 / 69 家防毒引擎判定為惡意，No security vendors flagged this file as malicious"></figure>
         </div>
       </div>
     </section>
@@ -380,7 +388,7 @@
         <details><summary>需要註冊帳號嗎？我的資料存在哪裡？</summary><p>不用註冊。所有單字、複習紀錄、寵物資料都存在你電腦上的資料庫，不會上傳。要備份或換電腦，複製資料夾就好；單字也能匯出成 CSV 或 Anki。</p></details>
         <details><summary>沒有安裝任何 AI 也能用嗎？</summary><p>可以。很多影片本來就有 YouTube 中文字幕或 Google 自動翻譯；沒有的話，用「網頁 AI 翻譯」把題目貼到免費的 ChatGPT、Gemini 等網頁，再把回覆貼回來就好。查字、收藏、複習、寵物都不需要 AI。</p></details>
         <details><summary>支援哪些影片？</summary><p>有英文字幕的 YouTube 影片都可以，包含人工字幕和自動產生的字幕。TED、新聞、Podcast、教學影片都很適合。</p></details>
-        <details><summary>安裝檔安全嗎？會不會被加料？</summary><p>安裝檔是 GitHub Actions 用 GitHub 上公開的原始碼建置、直接發佈的，不經過任何人的電腦，每個檔案都附 SHA-256 檢查碼可以自己比對。詳見上方<a href="#trust">「安心下載」</a>。</p></details>
+        <details><summary>安裝檔安全嗎？會不會被加料？</summary><p>安裝檔是 GitHub Actions 用 GitHub 上公開的原始碼建置、直接發佈的，不經過任何人的電腦，每個檔案都附 SHA-256 檢查碼可以自己比對；Windows 安裝檔在 VirusTotal 的 69 家防毒引擎掃描結果是 0 家判定有問題。詳見上方<a href="#trust">「安心下載」</a>。</p></details>
         <details><summary>Windows 安裝時跳出「Windows 已保護您的電腦」？</summary><p>因為安裝檔還沒有購買程式碼簽章憑證（Windows 對沒簽章的新程式都會這樣提醒），不代表有問題。點「其他資訊」→「仍要執行」即可。</p></details>
         <details><summary>macOS 說「無法打開，因為無法驗證開發者」？</summary><p>在「應用程式」裡對 book-en 按右鍵 →「打開」，再按一次「打開」就行，之後就不會再問。Intel Mac 版不含 Kokoro 離線語音，其他功能都一樣。</p></details>
         <details><summary>會影響我的 YouTube 帳號嗎？</summary><p>book-en 就是一個打開 youtube.com 的瀏覽器，再加上學習面板。它用的是 YouTube 本身提供的字幕，不下載影片、不散布字幕。你可以照常登入 YouTube。</p></details>
@@ -401,11 +409,14 @@
     <div class="wrap foot-in">
       <div class="brand"><img src="img/icon.png" alt="" width="24" height="24">book-en</div>
       <p>MIT 授權 · <a href="https://github.com/craig7351/book-en" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/craig7351/book-en/issues" target="_blank" rel="noopener">回報問題</a></p>
+      <p class="counter" data-counter-show hidden>👀 已有 <b data-counter="visitors"></b> 位訪客來看過 book-en · 今天 <b data-counter="today"></b> 人</p>
       <p class="muted small">字典資料：ECDICT、wordfreq、Tatoeba 等，詳見 App 內「設定 → 貢獻」。YouTube 是 Google LLC 的商標；book-en 與 YouTube、TED 無任何關聯，截圖中的影片僅作功能示範。</p>
     </div>
   </footer>
 
   <div class="lightbox" hidden><img alt=""></div>
   <script src="main.js"></script>
+  <!-- 人數計數器（不存 IP 或個資，原始碼：cloudflare-count） -->
+  <script src="https://site-counter.bookai.workers.dev/counter.js" data-site="book-en" async></script>
 </body>
 </html>
