@@ -2,6 +2,8 @@
 
 用 YouTube 學英文的桌面 App。直接在真正的 youtube.com 上加入雙語字幕、逐句精聽、點字查詢、單字分級，以及單字庫與間隔重複複習。
 
+**介紹網站：<https://craig7351.github.io/book-en/>**　｜　**下載：[GitHub Releases](https://github.com/craig7351/book-en/releases/latest)**
+
 技術：Tauri v2 + 系統 WebView（Windows 上是 WebView2）。App 載入 youtube.com，再把學習介面（React）注入頁面。
 
 ## 功能
