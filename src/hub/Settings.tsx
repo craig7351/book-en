@@ -100,10 +100,13 @@ function AiEngine({ model, onChange }: { model: string; onChange: (model: string
       </p>
       <p className="muted small">
         官方安裝教學：
-        {PROVIDERS.map((p) => (
-          <button key={p.id} className="link" onClick={() => open(p.install)}>
-            {p.name}
-          </button>
+        {PROVIDERS.map((p, i) => (
+          <span key={p.id}>
+            {i > 0 && '・'}
+            <button className="link" onClick={() => open(p.install)}>
+              {p.name}
+            </button>
+          </span>
         ))}
       </p>
     </>

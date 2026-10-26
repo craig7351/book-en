@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>book-en｜用 YouTube 打造你的英文單字庫</title>
+  <meta name="description" content="book-en 是免費開源的桌面 App：看 YouTube 時有雙語字幕、點字就查，收藏的單字用間隔複習記牢，還有寵物陪你每天練。資料都存在你的電腦，不用註冊。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="book-en｜用 YouTube 打造你的英文單字庫">
+  <meta property="og:description" content="雙語字幕、點字查詢、間隔複習、寵物養成。免費開源，資料都在你的電腦。">
+  <meta property="og:image" content="https://craig7351.github.io/book-en/img/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="#top"><img src="img/icon.png" alt="" width="32" height="32">book-en</a>
+    <nav>
+      <a href="#features">功能特色</a>
+      <a href="#loop">怎麼學</a>
+      <a href="#why">為什麼選它</a>
+      <a href="#faq">常見問題</a>
+      <a href="https://github.com/craig7351/book-en" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <a class="btn btn-dark btn-sm" href="#download">免費下載</a>
+  </header>
+
+  <main id="top">
+    <!-- 主視覺 -->
+    <section class="hero">
+      <p class="eyebrow">看影片 · 收單字 · 每天複習</p>
+      <h1>用你愛看的 YouTube<br>打造<span class="hl">自己的英文單字庫</span></h1>
+      <p class="lead">雙語字幕、點字就查、一鍵收藏，看過的影片自動變成單字卡。<br class="wide">間隔複習幫你記牢，還有一隻小寵物陪你天天練。</p>
+      <div class="cta">
+        <a class="btn btn-dark" href="#download">免費下載 <span class="arrow">↗</span></a>
+        <a class="btn btn-soft" href="#features">看看怎麼運作</a>
+      </div>
+      <p class="platforms">Windows · macOS · Linux　｜　免費開源（MIT）　｜　不用註冊</p>
+
+      <div class="hero-shot reveal">
+        <div class="frame">
+          <div class="frame-bar"><i></i><i></i><i></i></div>
+          <img src="img/hero.webp" width="2100" height="1350" alt="book-en 播放 TED 演講：影片上有中英雙語字幕，右側面板列出每一句字幕與中文，難字用顏色標出">
+        </div>
+        <span class="chip c1">🌏 雙語字幕</span>
+        <span class="chip c2">👆 點字就查</span>
+        <span class="chip c3">⭐ 一鍵收藏</span>
+        <span class="chip c4">🐉 寵物陪你練</span>
+      </div>
+    </section>
+
+    <!-- 學習循環 -->
+    <section id="loop" class="loop band">
+      <div class="wrap">
+        <div class="steps">
+          <div class="step reveal">
+            <div class="ico">🎬</div>
+            <h3>看影片</h3>
+            <p>雙語字幕、逐句精聽，難字自動標色</p>
+          </div>
+          <div class="arrow-r" aria-hidden="true"></div>
+          <div class="step reveal">
+            <div class="ico">⭐</div>
+            <h3>收藏</h3>
+            <p>點字查詢，連同原句、時間點一起收進單字庫</p>
+          </div>
+          <div class="arrow-r" aria-hidden="true"></div>
+          <div class="step reveal">
+            <div class="ico">🧠</div>
+            <h3>複習</h3>
+            <p>依遺忘曲線出題，用影片原句考你</p>
+          </div>
+        </div>
+        <div class="cycle" aria-hidden="true"><span>每一天</span></div>
+        <div class="tags">
+          <span>雙語字幕</span><span>逐句精聽</span><span>單字分級</span><span>間隔複習</span><span>離線發音</span><span>AI 翻譯</span><span>寵物養成</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 功能 -->
+    <section id="features" class="features">
+      <div class="wrap">
+        <div class="sec-head">
+          <p class="eyebrow">功能特色</p>
+          <h2>交給 book-en 處理<br>專心<span class="hl">聽懂、記住</span></h2>
+          <p class="sub">從看影片、查單字到複習，每一步都替你省掉切視窗、抄筆記的麻煩。</p>
+        </div>
+
+        <article class="feat reveal">
+          <div class="feat-text">
+            <span class="kicker">雙語字幕</span>
+            <h3>每一句英文旁邊，<br>都有看得懂的中文</h3>
+            <p>英文字幕自動整理成完整句子，中文可以自己挑來源：</p>
+            <ul class="checks">
+              <li>YouTube 中文字幕、Google 自動翻譯</li>
+              <li>本機 AI 翻譯（Claude Code、Codex、Antigravity、Gemini CLI）</li>
+              <li>沒裝 AI 也行：把題目貼到免費的 ChatGPT、Gemini 網頁，再貼回來</li>
+              <li>翻好的字幕會存檔，下次打開直接用</li>
+            </ul>
+          </div>
+          <div class="feat-img duo">
+            <figure class="frame tall"><img src="img/panel.webp" width="630" height="1290" loading="lazy" alt="字幕面板：每句英文下方是中文翻譯，目前播放的句子反白"></figure>
+            <figure class="frame tall"><img src="img/webai.webp" width="630" height="1290" loading="lazy" alt="網頁 AI 翻譯：分段複製題目、貼回 AI 的回覆、顯示翻譯進度"></figure>
+          </div>
+        </article>
+
+        <article class="feat rev reveal">
+          <div class="feat-text">
+            <span class="kicker">逐句精聽</span>
+            <h3>聽不清楚？<br>按一個鍵再聽一次</h3>
+            <p>專為「精聽」設計的控制列，不用再拖進度條找那一句。</p>
+            <ul class="checks">
+              <li><kbd>A</kbd> 上一句　<kbd>S</kbd> 重播　<kbd>D</kbd> 下一句</li>
+              <li>每句自動暫停、單句循環、0.5× 到 1.5× 變速</li>
+              <li>盲聽模式：影片上的字幕先模糊，聽完滑鼠移過去才顯示</li>
+              <li>字幕直接疊在影片上，全螢幕也看得到</li>
+            </ul>
+          </div>
+          <div class="feat-img">
+            <figure class="frame"><img src="img/listen.webp" width="1880" height="790" loading="lazy" alt="右側的精聽控制列（上一句、重播、下一句、每句暫停、單句循環、盲聽、變速），影片上疊著放大的雙語字幕"></figure>
+          </div>
+        </article>
+
+        <article class="feat reveal">
+          <div class="feat-text">
+            <span class="kicker">點字查詢</span>
+            <h3>點一下，<br>這個字的一切都在這裡</h3>
+            <p>不用另開字典。單字卡把你需要的都放在一起：</p>
+            <ul class="checks">
+              <li>中文釋義、音標、真人錄音，原形自動還原（running → run）</li>
+              <li>考試標籤（高中、托福、雅思、GRE 等）與常用排名</li>
+              <li>這支影片裡的其他例句，點了就跳到那個時間點</li>
+              <li>例句庫，以及 AI 解釋「這個字在這句話裡的意思」</li>
+            </ul>
+          </div>
+          <div class="feat-img">
+            <figure class="frame"><img src="img/wordcard.webp" width="2100" height="1350" loading="lazy" alt="單字卡：entire 的音標、考試標籤、中英釋義、原句與例句"></figure>
+          </div>
+        </article>
+
+        <article class="feat rev reveal">
+          <div class="feat-text">
+            <span class="kicker">單字分級</span>
+            <h3>哪些字值得背，<br>一眼就看出來</h3>
+            <p>依真實影視語料的詞頻排名，把字幕裡的字分成「已會、建議學習、罕見」三級並標上顏色。程度自己設，背過的字也可以一鍵標成已會。</p>
+            <ul class="checks">
+              <li>每支影片列出「本片建議學習」的單字清單</li>
+              <li>詞彙頁估算你的詞彙量，看自己一路的進步</li>
+            </ul>
+          </div>
+          <div class="feat-img duo mix">
+            <figure class="frame tall"><img src="img/words.webp" width="630" height="1290" loading="lazy" alt="本片建議學習的單字清單，附常用排名"></figure>
+            <figure class="frame"><img src="img/levels.webp" width="1500" height="1140" loading="lazy" alt="詞彙頁：依常用排名列出單字並估算詞彙量"></figure>
+          </div>
+        </article>
+
+        <article class="feat reveal">
+          <div class="feat-text">
+            <span class="kicker">單字庫</span>
+            <h3>每個收藏的字，<br>都記得它從哪裡來</h3>
+            <p>收藏時連同原句、中文翻譯、影片和時間點一起存下來。忘了怎麼用？點一下就回到影片裡的那一刻。</p>
+            <ul class="checks">
+              <li>依狀態篩選：待複習、新字、學習中、常答錯、已熟練</li>
+              <li>依影片篩選、排序、批次暫停或刪除</li>
+              <li>匯出 CSV 或 Anki 牌組</li>
+            </ul>
+          </div>
+          <div class="feat-img">
+            <figure class="frame"><img src="img/vocab.webp" width="1500" height="1140" loading="lazy" alt="單字庫：卡片列出單字、中文、原句與來源影片，上方可依狀態篩選"></figure>
+          </div>
+        </article>
+
+        <article class="feat rev reveal">
+          <div class="feat-text">
+            <span class="kicker">間隔複習</span>
+            <h3>在快忘記的時候，<br>剛好再考你一次</h3>
+            <p>依遺忘曲線安排複習時間，答對的字間隔越拉越長，常錯的字多練幾次。題目用的是你在影片裡聽過的原句。</p>
+            <ul class="checks">
+              <li>四種題型：看中文選英文、聽發音拼單字、原句填空、句子聽力</li>
+              <li>每天新字上限，收再多也不會被複習淹沒</li>
+              <li>答完立刻看到解答、原句發音和中文</li>
+            </ul>
+          </div>
+          <div class="feat-img">
+            <figure class="frame"><img src="img/review-done.webp" width="1500" height="1140" loading="lazy" alt="原句填空題答對後顯示解答、音標與原句"></figure>
+          </div>
+        </article>
+
+        <article class="feat reveal">
+          <div class="feat-text">
+            <span class="kicker">寵物養成</span>
+            <h3>每天複習，<br>看著牠慢慢長大</h3>
+            <p>答對到期的字，寵物就會拿到經驗值、你會拿到金幣。連續學習會孵出新的蛋，金幣可以買帽子、眼鏡和新場景。</p>
+            <ul class="checks">
+              <li>4 種寵物、28 種樣子，長大的樣子由你怎麼學決定</li>
+              <li>孵化時有 1/64 機率出現閃亮版</li>
+              <li>看影片時，牠也會在面板角落陪你</li>
+              <li>不想玩？設定裡一鍵關掉，資料都會保留</li>
+            </ul>
+          </div>
+          <div class="feat-img duo wide">
+            <figure class="frame"><img src="img/pet.webp" width="1500" height="1140" loading="lazy" alt="寵物小屋：戴著巫師帽與眼鏡的紫色小龍，旁邊有一顆正在孵化的蛋"></figure>
+            <figure class="frame"><img src="img/dex.webp" width="1500" height="1140" loading="lazy" alt="寵物圖鑑：四種寵物各自的成長階段"></figure>
+          </div>
+        </article>
+
+        <article class="feat rev reveal">
+          <div class="feat-text">
+            <span class="kicker">發音與 AI</span>
+            <h3>自然的發音，<br>AI 用你自己的帳號</h3>
+            <p>單字優先播放字典的真人錄音；句子可以用內建的 Kokoro 離線語音，10 種美式、英式聲音，不用網路就能念得自然。</p>
+            <ul class="checks">
+              <li>AI 翻譯、AI 解釋、AI 例句都呼叫你電腦上的 AI CLI，不用另外申請 API key</li>
+              <li>支援 Claude Code、Codex、Antigravity、Gemini CLI，裝一種就好</li>
+              <li>設定頁直接告訴你裝好了沒，附官方安裝教學</li>
+            </ul>
+          </div>
+          <div class="feat-img duo wide">
+            <figure class="frame"><img src="img/settings-voice.webp" width="1500" height="1140" loading="lazy" alt="發音設定：Kokoro 離線語音的 10 種聲音"></figure>
+            <figure class="frame"><img src="img/settings-ai.webp" width="1500" height="1140" loading="lazy" alt="翻譯設定：選擇 AI 引擎與模型，顯示安裝狀態與官方安裝教學連結"></figure>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 使用情境 -->
+    <section class="cases band warm">
+      <div class="wrap">
+        <div class="sec-head left">
+          <p class="eyebrow">使用情境</p>
+          <h2>從你本來就在看的影片開始</h2>
+        </div>
+        <div class="case-grid">
+          <article class="case reveal" style="--c:#7c3aed">
+            <div class="case-top"><span class="case-ico">💼</span>想練聽力的上班族</div>
+            <h3>通勤、午休看的 TED 和 Podcast，變成每天的聽力課</h3>
+            <p class="muted">每天只有零碎時間，又不想再買一套課程。</p>
+            <hr>
+            <p class="lbl">原本的困擾</p>
+            <p>看完影片只覺得「好像聽懂了」，生字查了就忘，下次遇到還是不認得。</p>
+            <p class="lbl">用了 book-en</p>
+            <p>遇到生字點一下就收藏，晚上花十分鐘複習，用的還是早上聽過的那一句。</p>
+          </article>
+          <article class="case reveal" style="--c:#ea580c">
+            <div class="case-top"><span class="case-ico">📝</span>準備多益、雅思的學生</div>
+            <h3>用真實語境背單字，不再死背單字書</h3>
+            <p class="muted">單字書背了又忘，考試聽力跟不上語速。</p>
+            <hr>
+            <p class="lbl">原本的困擾</p>
+            <p>單字表上的字沒有上下文，聽力題的語速一快就整句漏掉。</p>
+            <p class="lbl">用了 book-en</p>
+            <p>單字卡標出托福、雅思等考試標籤，逐句精聽練語速，句子聽力題專練「聽懂整句」。</p>
+          </article>
+          <article class="case reveal" style="--c:#0d9488">
+            <div class="case-top"><span class="case-ico">🎮</span>需要一點動力的人</div>
+            <h3>每天回來一下，因為寵物在等你</h3>
+            <p class="muted">知道要每天複習，但三天後就放棄了。</p>
+            <hr>
+            <p class="lbl">原本的困擾</p>
+            <p>背單字 App 一個一個裝，每個都撐不過一週。</p>
+            <p class="lbl">用了 book-en</p>
+            <p>答對就讓寵物長大，連續天數會孵出新蛋，偶爾錯過一天還有保護卡。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 為什麼選它 -->
+    <section id="why" class="why">
+      <div class="wrap">
+        <div class="sec-head">
+          <p class="eyebrow">為什麼選 book-en</p>
+          <h2>你的學習紀錄，<span class="hl">只屬於你</span></h2>
+        </div>
+        <div class="why-grid">
+          <div class="why-item reveal"><div class="ico">🔒</div><h3>資料存在你的電腦</h3><p>單字庫、複習紀錄都在本機的資料庫，不上傳到任何伺服器。</p></div>
+          <div class="why-item reveal"><div class="ico">🆓</div><h3>完全免費、開源</h3><p>MIT 授權，原始碼都在 GitHub，沒有訂閱、沒有廣告。</p></div>
+          <div class="why-item reveal"><div class="ico">🙅</div><h3>不用註冊帳號</h3><p>下載、打開就能用。離線字典直接內建在安裝檔裡。</p></div>
+          <div class="why-item reveal"><div class="ico">🤖</div><h3>AI 可有可無</h3><p>AI 用你自己已登入的 CLI；完全不用 AI，YouTube 字幕和網頁 AI 也夠用。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 快速開始 -->
+    <section id="download" class="start band">
+      <div class="wrap">
+        <div class="sec-head">
+          <p class="eyebrow">快速開始</p>
+          <h2>三個步驟，今天就開始</h2>
+        </div>
+        <ol class="start-steps">
+          <li class="reveal"><b>1</b><h3>下載安裝</h3><p>到 GitHub Releases 下載你的系統版本，安裝檔已內含離線字典。</p></li>
+          <li class="reveal"><b>2</b><h3>打開任一支影片</h3><p>book-en 會打開 YouTube，挑一支有英文字幕的影片，右邊就會出現字幕面板。</p></li>
+          <li class="reveal"><b>3</b><h3>點字、收藏、複習</h3><p>遇到生字點一下收藏，到「學習中心」複習，寵物就會開始長大。</p></li>
+        </ol>
+        <div class="dl reveal">
+          <a class="btn btn-dark btn-lg" id="dl-main" href="https://github.com/craig7351/book-en/releases/latest">免費下載 <span class="arrow">↗</span></a>
+          <p class="dl-list">
+            <span data-os="win">Windows 10 / 11（.exe）</span>
+            <span data-os="mac">macOS Apple Silicon / Intel（.dmg）</span>
+            <span data-os="linux">Linux（.AppImage / .deb）</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 常見問題 -->
+    <section id="faq" class="faq">
+      <div class="wrap narrow">
+        <div class="sec-head">
+          <p class="eyebrow">常見問題</p>
+          <h2>開始之前，你可能想知道</h2>
+        </div>
+        <details><summary>真的完全免費嗎？</summary><p>是的。book-en 是 MIT 授權的開源軟體，沒有付費版、沒有廣告。唯一可能花錢的是 AI 翻譯，但它用的是你自己已經在用的 AI 帳號（訂閱額度）；不想花就用 YouTube 字幕或免費的網頁 AI。</p></details>
+        <details><summary>需要註冊帳號嗎？我的資料存在哪裡？</summary><p>不用註冊。所有單字、複習紀錄、寵物資料都存在你電腦上的資料庫，不會上傳。要備份或換電腦，複製資料夾就好；單字也能匯出成 CSV 或 Anki。</p></details>
+        <details><summary>沒有安裝任何 AI 也能用嗎？</summary><p>可以。很多影片本來就有 YouTube 中文字幕或 Google 自動翻譯；沒有的話，用「網頁 AI 翻譯」把題目貼到免費的 ChatGPT、Gemini 等網頁，再把回覆貼回來就好。查字、收藏、複習、寵物都不需要 AI。</p></details>
+        <details><summary>支援哪些影片？</summary><p>有英文字幕的 YouTube 影片都可以，包含人工字幕和自動產生的字幕。TED、新聞、Podcast、教學影片都很適合。</p></details>
+        <details><summary>Windows 安裝時跳出「Windows 已保護您的電腦」？</summary><p>因為安裝檔還沒有購買程式碼簽章憑證。點「其他資訊」→「仍要執行」即可。原始碼都公開在 GitHub，也可以自己建置。</p></details>
+        <details><summary>macOS 說「無法打開，因為無法驗證開發者」？</summary><p>在「應用程式」裡對 book-en 按右鍵 →「打開」，再按一次「打開」就行，之後就不會再問。Intel Mac 版不含 Kokoro 離線語音，其他功能都一樣。</p></details>
+        <details><summary>會影響我的 YouTube 帳號嗎？</summary><p>book-en 就是一個打開 youtube.com 的瀏覽器，再加上學習面板。它用的是 YouTube 本身提供的字幕，不下載影片、不散布字幕。你可以照常登入 YouTube。</p></details>
+      </div>
+    </section>
+
+    <!-- 收尾 -->
+    <section class="final">
+      <div class="final-card reveal">
+        <h2>下一支想看的影片，<br>就是你的英文課</h2>
+        <p>不用改變看影片的習慣，讓 book-en 把每個生字留下來。</p>
+        <a class="btn btn-light btn-lg" href="https://github.com/craig7351/book-en/releases/latest">免費下載 book-en <span class="arrow">↗</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-in">
+      <div class="brand"><img src="img/icon.png" alt="" width="24" height="24">book-en</div>
+      <p>MIT 授權 · <a href="https://github.com/craig7351/book-en" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/craig7351/book-en/issues" target="_blank" rel="noopener">回報問題</a></p>
+      <p class="muted small">字典資料：ECDICT、wordfreq、Tatoeba 等，詳見 App 內「設定 → 貢獻」。YouTube 是 Google LLC 的商標；book-en 與 YouTube、TED 無任何關聯，截圖中的影片僅作功能示範。</p>
+    </div>
+  </footer>
+
+  <div class="lightbox" hidden><img alt=""></div>
+  <script src="main.js"></script>
+</body>
+</html>
