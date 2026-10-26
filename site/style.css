@@ -852,6 +852,94 @@ kbd {
   margin-top: 28px;
 }
 
+/* 安裝檔來源 */
+
+.trust {
+  padding: 110px 0 40px;
+}
+
+.trust-steps {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1.25fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.trust-step {
+  display: grid;
+  gap: 14px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px;
+}
+
+.trust-step .num {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--hl);
+  color: #fff;
+  font-weight: 700;
+}
+
+.trust-step h3 {
+  font-size: 20px;
+}
+
+.trust-step p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.trust-step .frame {
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(30 34 80 / 0.08);
+}
+
+.verify {
+  margin-top: 22px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px;
+}
+
+.verify h3 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.verify p {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+.cmds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.cmds div {
+  display: grid;
+  gap: 6px;
+}
+
+.cmds code {
+  display: block;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
 /* 常見問題 */
 
 .faq {
@@ -996,7 +1084,9 @@ details p {
 
   .case-grid,
   .start-steps,
-  .dl-grid {
+  .dl-grid,
+  .trust-steps,
+  .cmds {
     grid-template-columns: 1fr;
   }
 

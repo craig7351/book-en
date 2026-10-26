@@ -327,6 +327,48 @@
       </div>
     </section>
 
+    <!-- 安裝檔來源 -->
+    <section id="trust" class="trust">
+      <div class="wrap">
+        <div class="sec-head">
+          <p class="eyebrow">安心下載</p>
+          <h2>安裝檔由公開的原始碼<br><span class="hl">在雲端自動建置</span></h2>
+          <p class="sub">安裝檔不是在任何人的電腦上打包、手動上傳的，而是 GitHub Actions 拿 GitHub 上公開的原始碼建置，再直接發佈到 Release。整個過程都留在 GitHub 上，任何人都能查。</p>
+        </div>
+        <div class="trust-steps">
+          <article class="trust-step reveal">
+            <span class="num">1</span>
+            <h3>原始碼完全公開</h3>
+            <p>每一行程式碼都在 <a href="https://github.com/craig7351/book-en" target="_blank" rel="noopener">GitHub</a> 上，建置步驟也寫在公開的 <a href="https://github.com/craig7351/book-en/blob/main/.github/workflows/release.yml" target="_blank" rel="noopener">release.yml</a> 裡，想自己建置也可以。</p>
+          </article>
+          <article class="trust-step reveal">
+            <span class="num">2</span>
+            <h3>GitHub 的雲端主機建置</h3>
+            <p>推上版本標籤後，GitHub Actions 在 Windows、macOS、Linux 的乾淨主機上各自建置、跑完測試。</p>
+            <figure class="frame"><img src="img/build-run.webp" width="2120" height="800" loading="lazy" alt="GitHub Actions 的建置紀錄：v0.1.0 由 commit 6de215b 觸發，Windows、macOS 兩種、Linux 四個建置全部成功"></figure>
+            <p class="small"><a href="https://github.com/craig7351/book-en/actions/runs/40259123772" target="_blank" rel="noopener">看 v0.1.0 的建置紀錄 ↗</a></p>
+          </article>
+          <article class="trust-step reveal">
+            <span class="num">3</span>
+            <h3>由 github-actions 直接發佈</h3>
+            <p>Release 的發佈者是 GitHub 的 github-actions 機器人，並標明是用哪一個 commit 建置的；每個檔案都附上 SHA-256 檢查碼。</p>
+            <figure class="frame"><img src="img/build-release.webp" width="1920" height="220" loading="lazy" alt="Release 頁面：book-en v0.1.0 由 github-actions 發佈，對應 commit 6de215b"></figure>
+            <figure class="frame"><img src="img/build-assets.webp" width="1920" height="640" loading="lazy" alt="Release 的安裝檔清單，每個檔案旁邊都有 SHA-256 檢查碼"></figure>
+            <p class="small"><a href="https://github.com/craig7351/book-en/releases/latest" target="_blank" rel="noopener">看 Release 頁面 ↗</a></p>
+          </article>
+        </div>
+        <div class="verify reveal">
+          <h3>想自己確認下載的檔案沒被換過？</h3>
+          <p>算出檔案的 SHA-256，跟 Release 頁面上該檔案旁邊的檢查碼比對，一樣就代表跟 GitHub Actions 建出來的是同一個檔案。</p>
+          <div class="cmds">
+            <div><span class="muted">Windows（PowerShell）</span><code>Get-FileHash .\book-en_0.1.0_x64-setup.exe</code></div>
+            <div><span class="muted">macOS / Linux（終端機）</span><code>shasum -a 256 book-en_0.1.0_*.dmg</code></div>
+          </div>
+          <p class="muted small">想多一層確認，也可以把安裝檔上傳到 <a href="https://www.virustotal.com/" target="_blank" rel="noopener">VirusTotal</a> 用幾十家防毒引擎掃描。</p>
+        </div>
+      </div>
+    </section>
+
     <!-- 常見問題 -->
     <section id="faq" class="faq">
       <div class="wrap narrow">
@@ -338,7 +380,8 @@
         <details><summary>需要註冊帳號嗎？我的資料存在哪裡？</summary><p>不用註冊。所有單字、複習紀錄、寵物資料都存在你電腦上的資料庫，不會上傳。要備份或換電腦，複製資料夾就好；單字也能匯出成 CSV 或 Anki。</p></details>
         <details><summary>沒有安裝任何 AI 也能用嗎？</summary><p>可以。很多影片本來就有 YouTube 中文字幕或 Google 自動翻譯；沒有的話，用「網頁 AI 翻譯」把題目貼到免費的 ChatGPT、Gemini 等網頁，再把回覆貼回來就好。查字、收藏、複習、寵物都不需要 AI。</p></details>
         <details><summary>支援哪些影片？</summary><p>有英文字幕的 YouTube 影片都可以，包含人工字幕和自動產生的字幕。TED、新聞、Podcast、教學影片都很適合。</p></details>
-        <details><summary>Windows 安裝時跳出「Windows 已保護您的電腦」？</summary><p>因為安裝檔還沒有購買程式碼簽章憑證。點「其他資訊」→「仍要執行」即可。原始碼都公開在 GitHub，也可以自己建置。</p></details>
+        <details><summary>安裝檔安全嗎？會不會被加料？</summary><p>安裝檔是 GitHub Actions 用 GitHub 上公開的原始碼建置、直接發佈的，不經過任何人的電腦，每個檔案都附 SHA-256 檢查碼可以自己比對。詳見上方<a href="#trust">「安心下載」</a>。</p></details>
+        <details><summary>Windows 安裝時跳出「Windows 已保護您的電腦」？</summary><p>因為安裝檔還沒有購買程式碼簽章憑證（Windows 對沒簽章的新程式都會這樣提醒），不代表有問題。點「其他資訊」→「仍要執行」即可。</p></details>
         <details><summary>macOS 說「無法打開，因為無法驗證開發者」？</summary><p>在「應用程式」裡對 book-en 按右鍵 →「打開」，再按一次「打開」就行，之後就不會再問。Intel Mac 版不含 Kokoro 離線語音，其他功能都一樣。</p></details>
         <details><summary>會影響我的 YouTube 帳號嗎？</summary><p>book-en 就是一個打開 youtube.com 的瀏覽器，再加上學習面板。它用的是 YouTube 本身提供的字幕，不下載影片、不散布字幕。你可以照常登入 YouTube。</p></details>
       </div>
