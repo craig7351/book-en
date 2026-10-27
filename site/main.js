@@ -49,3 +49,15 @@ document.querySelectorAll('.frame img').forEach((img) =>
 )
 box.addEventListener('click', () => (box.hidden = true))
 addEventListener('keydown', (e) => e.key === 'Escape' && (box.hidden = true))
+
+// 介紹影片：點了才載入 YouTube 播放器
+document.querySelectorAll('.video-play').forEach((btn) =>
+  btn.addEventListener('click', () => {
+    const f = document.createElement('iframe')
+    f.src = `https://www.youtube-nocookie.com/embed/${btn.dataset.yt}?autoplay=1&rel=0`
+    f.title = 'book-en 介紹影片'
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'
+    f.allowFullscreen = true
+    btn.replaceWith(f)
+  }),
+)
