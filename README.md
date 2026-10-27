@@ -4,6 +4,12 @@
 
 **介紹網站：<https://craig7351.github.io/book-en/>**　｜　**下載：[GitHub Releases](https://github.com/craig7351/book-en/releases/latest)**
 
+## 影片介紹
+
+[![book-en 介紹影片](https://img.youtube.com/vi/ZBdVt7ZaCr0/maxresdefault.jpg)](https://www.youtube.com/watch?v=ZBdVt7ZaCr0)
+
+三分鐘看懂 book-en：雙語字幕、點字查詢、AI 翻譯、複習和寵物養成（點圖片到 YouTube 觀看）。
+
 技術：Tauri v2 + 系統 WebView（Windows 上是 WebView2）。App 載入 youtube.com，再把學習介面（React）注入頁面。
 
 ## 功能
